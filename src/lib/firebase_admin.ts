@@ -4,7 +4,7 @@ import { OpenAILib } from "./openAI";
 
 // Import your service account key JSON file
 // Ensure the path is correct relative to this file
-const serviceAccount = require("../test-project-001-5703b-firebase-adminsdk-fbsvc-12982fd266.json");
+const serviceAccount = require("../../test-project-001-5703b-firebase-adminsdk-fbsvc-12982fd266.json");
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp({
@@ -12,7 +12,7 @@ admin.initializeApp({
   databaseURL: "https://test-project-001-5703b-default-rtdb.firebaseio.com",
 });
 
-// Export the initialized admin object
+// Export the initialized admin objects
 export default admin;
 
 export async function getUserDocumentById(
