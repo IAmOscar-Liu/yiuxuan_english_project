@@ -1,1 +1,0 @@
-{"version":3,"file":"join.js","sourceRoot":"","sources":["../../src/handler/join.ts"],"names":[],"mappings":";;;;;AAGA,gCASC;AAXD,2DAAmC;AAEnC,SAAgB,UAAU,CAAC,EAAE,UAAU,EAA0B;IAC/D,MAAM,cAAc,GAAyB;QAC3C,IAAI,EAAE,MAAM;QACZ,IAAI,EAAE,iCAAiC;KACxC,CAAC;IACF,OAAO,gBAAM,CAAC,YAAY,CAAC;QACzB,UAAU;QACV,QAAQ,EAAE,CAAC,cAAc,CAAC;KAC3B,CAAC,CAAC;AACL,CAAC"}
