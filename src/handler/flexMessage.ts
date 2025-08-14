@@ -1,7 +1,7 @@
 import { messagingApi } from "@line/bot-sdk";
 import client from "../lib/client";
+import { formatFirebaseDateTime } from "../lib/formatter";
 import { handleTextMessage } from "./textMessage";
-import { formatDateToString } from "../lib/formatter";
 
 function buildLearningSummaryFlexMessage({
   id,
@@ -133,9 +133,7 @@ function buildLearningSummaryFlexMessage({
                 },
                 {
                   type: "text",
-                  text: updatedAt
-                    ? formatDateToString(updatedAt.toDate())
-                    : "N/A",
+                  text: formatFirebaseDateTime(updatedAt),
                   wrap: true,
                   color: "#666666",
                   size: "sm",

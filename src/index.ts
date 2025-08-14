@@ -28,8 +28,10 @@ import {
   logOutUser,
 } from "./lib/firebase_admin";
 import { formatUserRole } from "./lib/formatter";
+import { isFuzzyMatch } from "./lib/isFuzzyMatch";
 import { OpenAILib } from "./lib/openAI";
 import { readRichMenuBId } from "./lib/readRichMenuId";
+import { limiter } from "./lib/rateLimit";
 
 // create LINE SDK config from env variables
 const lineMiddleware = middleware({
@@ -244,12 +246,26 @@ function handleEvent(event: webhook.Event) {
     return getUserDocumentById(event.source?.userId ?? "").then(
       async (user) => {
         if (user && user.isLoggedIn) {
-          if (user.runId)
+          if (user.runId || !limiter.canExecute(user.id))
             return handleTextMessage({
               replyToken: event.replyToken,
               text: "系統正在回覆您的訊息，請稍後......",
             });
           if (user.threadId) {
+            if (isFuzzyMatch(textMessage, "Let's call it a day")) {
+              return handleConfirmMessage({
+                replyToken: event.replyToken,
+                text: "是否結束目前任務？",
+                actions: [
+                  { type: "postback", label: "是", data: "user_cancel_task" },
+                  {
+                    type: "postback",
+                    label: "否",
+                    data: "user_not_cancel_task",
+                  },
+                ],
+              });
+            }
             const openAIResult = await OpenAILib.chat({
               user,
               message: textMessage,
@@ -370,7 +386,7 @@ function handleEvent(event: webhook.Event) {
               replyToken: event.replyToken,
               text: "任務已結束",
             });
-          if (user.runId)
+          if (user.runId || !limiter.canExecute(user.id))
             return handleTextMessage({
               replyToken: event.replyToken,
               text: "系統正在回覆您的訊息，請稍後......",
@@ -380,7 +396,7 @@ function handleEvent(event: webhook.Event) {
             const openAIResult = await OpenAILib.chat({
               user,
               message:
-                "請給我成果回顧，例如學習紀錄，本次亮點、章節進度條、整體評分(0~5)&下一關挑戰引導",
+                "Let's call it a day.\n請給我成果回顧，例如學習紀錄，本次亮點、章節進度條、整體評分(0~5)&下一關挑戰引導",
             });
             if (openAIResult.success) {
               text = openAIResult.data;
