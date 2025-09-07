@@ -1,9 +1,3 @@
-// video.js
-import {
-  doc,
-  getDoc,
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-import { db } from "./firebase.js";
 import { initWithSearchParams } from "./liff.js";
 
 const loadingDiv = document.getElementById("loading");
@@ -12,9 +6,10 @@ const formTitle = document.getElementById("form-title");
 
 async function getUserDoc(userId) {
   if (!userId) return null;
-  const userDocRef = doc(db, "user", userId);
-  const userDocSnap = await getDoc(userDocRef);
-  return userDocSnap.exists() ? userDocSnap.data() : null;
+  //   const userDocRef = doc(db, "user", userId);
+  //   const userDocSnap = await getDoc(userDocRef);
+  //   return userDocSnap.exists() ? userDocSnap.data() : null;
+  return (await fetch(`/api/user/${userId}`).then((res) => res.json())).data;
 }
 
 /* ---------------- utilities ---------------- */
@@ -54,15 +49,21 @@ function setBusy(btn, busy, busyText = "送出中…") {
 }
 
 /* ---------------- API ---------------- */
-async function loadVideoJson(chapterName) {
-  const res = await fetch(`/api/video/${chapterName}`, { cache: "no-store" });
+async function loadVideoJson(chapterName, token) {
+  const res = await fetch(`/api/video/${chapterName}`, {
+    cache: "no-store",
+    headers: { authorization: `Bearer ${token}` },
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return await res.json();
 }
-async function postVideoEvent(name, body) {
+async function postVideoEvent(name, body, token) {
   const res = await fetch(`/api/video/${name}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -74,7 +75,8 @@ function renderVideoLesson(
   json,
   userId,
   isVideoWatched = false,
-  chapterName = ""
+  chapterName = "",
+  token
 ) {
   formTitle.textContent = json.title || "影片課程";
 
@@ -230,8 +232,8 @@ function renderVideoLesson(
       gateMsg.textContent = "已達觀看門檻，現在可以開始作答。";
       setQuizEnabled(true);
       // Notify server ONCE when threshold reached
-      postVideoEvent(chapterName || json.name || "", { userId }).catch((e) =>
-        console.warn("notify watched failed:", e)
+      postVideoEvent(chapterName || json.name || "", { userId }, token).catch(
+        (e) => console.warn("notify watched failed:", e)
       );
     }
   }
@@ -330,10 +332,14 @@ function renderVideoLesson(
 
     setBusy(submitBtn, true);
     try {
-      await postVideoEvent(chapterName || json.name || "", {
-        userId,
-        submittedAt: new Date().toISOString(),
-      });
+      await postVideoEvent(
+        chapterName || json.name || "",
+        {
+          userId,
+          submittedAt: new Date().toISOString(),
+        },
+        token
+      );
       showAlert("success", "恭喜全部答對！已記錄完成。");
     } catch (e) {
       console.error("submit answers failed:", e);
@@ -360,23 +366,32 @@ function renderVideoLesson(
   loadingDiv.classList.add("d-none");
   detailsDiv.classList.remove("d-none");
 
-  if (!name || !userId) {
+  if (!name) {
     formTitle.textContent = "影片課程";
-    detailsDiv.innerHTML = `<div class="alert alert-warning">URL中缺少 name 或 userId 參數。</div>`;
+    detailsDiv.innerHTML = `<div class="alert alert-warning">URL中缺少 name 參數。</div>`;
+    return;
+  }
+
+  if (!userId) {
+    const lineIdToken = liff.getDecodedIDToken();
+    userId = lineIdToken?.sub || "";
+  }
+
+  if (!userId) {
+    detailsDiv.innerHTML = `<div class='text-danger'>無法取得使用者 ID。</div>`;
     return;
   }
 
   try {
-    const [json, currentUser] = await Promise.all([
-      loadVideoJson(name),
-      getUserDoc(userId),
-    ]);
+    const currentUser = await getUserDoc(userId);
     if (!currentUser) throw new Error("Failed to load current user");
+
+    const json = await loadVideoJson(name, currentUser.token);
 
     const isVideoWatched = !!(currentUser.completedVideos ?? []).find(
       (v) => v.name == name
     );
-    renderVideoLesson(json, userId, isVideoWatched, name);
+    renderVideoLesson(json, userId, isVideoWatched, name, currentUser.token);
   } catch (err) {
     console.error("[Video] load failed:", err);
     detailsDiv.innerHTML = `<div class="alert alert-danger">載入課程失敗：${

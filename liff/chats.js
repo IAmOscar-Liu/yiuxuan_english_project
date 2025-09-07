@@ -1,15 +1,5 @@
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  Timestamp,
-  doc,
-  getDoc,
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-import { db } from "./firebase.js";
 import { init } from "./liff.js";
+import { formatFirebaseTime } from "./utils.js";
 
 let lineIdToken = null;
 let currentUserDoc = null; // Make user document available to the whole module
@@ -48,9 +38,8 @@ function renderChatList(chats, userName) {
       .map((chat) => {
         const { summaryJson, id, updatedAt } = chat;
         const title = summaryJson?.topic || `聊天紀錄 ${id.substring(0, 8)}`;
-        const completedTime = updatedAt
-          ? new Date(updatedAt.seconds * 1000).toLocaleString()
-          : "無";
+        const completedTime = formatFirebaseTime(updatedAt);
+        // const completedTime = JSON.stringify(updatedAt);
         const scoreHtml =
           summaryJson?.score !== undefined && summaryJson?.score !== null
             ? getStarRating(summaryJson.score)
@@ -83,26 +72,50 @@ function renderChatList(chats, userName) {
 
 async function getChatsByUserId(userId, startDate, endDate) {
   if (!userId) return [];
-  const constraints = [
-    where("userId", "==", userId),
-    where("summaryJson", "!=", null),
-  ];
-  if (startDate)
-    constraints.push(where("updatedAt", ">=", Timestamp.fromDate(startDate)));
-  if (endDate)
-    constraints.push(where("updatedAt", "<=", Timestamp.fromDate(endDate)));
-  constraints.push(orderBy("updatedAt", "desc"));
+  // const constraints = [
+  //   where("userId", "==", userId),
+  //   where("summaryJson", "!=", null),
+  // ];
+  // if (startDate)
+  //   constraints.push(where("updatedAt", ">=", Timestamp.fromDate(startDate)));
+  // if (endDate)
+  //   constraints.push(where("updatedAt", "<=", Timestamp.fromDate(endDate)));
+  // constraints.push(orderBy("updatedAt", "desc"));
 
-  const q = query(collection(db, "chat"), ...constraints);
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  // const q = query(collection(db, "chat"), ...constraints);
+  // const querySnapshot = await getDocs(q);
+  // return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  // 1. Initialize URLSearchParams.
+  const params = new URLSearchParams();
+
+  // 2. Conditionally append parameters if they exist.
+  if (startDate) {
+    params.append("startDate", startDate);
+  }
+  if (endDate) {
+    params.append("endDate", endDate);
+  }
+
+  // 3. Convert params to a string for the URL.
+  const queryString = params.toString();
+
+  // 4. Construct the final URL. Append the query string only if it's not empty.
+  const url = `/api/chat/list/${userId}${queryString ? `?${queryString}` : ""}`;
+
+  return (
+    await fetch(url, {
+      headers: { authorization: `Bearer ${currentUserDoc.token}` },
+    }).then((res) => res.json())
+  ).data;
 }
 
 async function getUserDoc(userId) {
   if (!userId) return null;
-  const userDocRef = doc(db, "user", userId);
-  const userDocSnap = await getDoc(userDocRef);
-  return userDocSnap.exists() ? userDocSnap.data() : null;
+  // const userDocRef = doc(db, "user", userId);
+  // const userDocSnap = await getDoc(userDocRef);
+  // return userDocSnap.exists() ? userDocSnap.data() : null;
+  return (await fetch(`/api/user/${userId}`).then((res) => res.json())).data;
 }
 
 async function getUserProfile() {

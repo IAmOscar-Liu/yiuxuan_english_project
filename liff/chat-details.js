@@ -1,11 +1,5 @@
-import {
-  doc,
-  getDoc,
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-import { db } from "./firebase.js";
 import { initWithSearchParams } from "./liff.js";
-
-let lineIdToken = null;
+import { formatFirebaseTime } from "./utils.js";
 
 const loadingDiv = document.getElementById("loading");
 const detailsDiv = document.getElementById("task-details");
@@ -15,17 +9,10 @@ const formTitle = document.getElementById("form-title");
  * Renders the task details on the page.
  * @param {string} threadId The ID of the chat thread.
  * @param {object} chatDetail The chat detail document from Firestore.
+ * @param {object} userDetail The user detail document from Firestore.
  */
-async function renderChatDetail(threadId, chatDetail) {
-  // Check if chatDetail exists
-  if (!chatDetail) {
-    detailsDiv.innerHTML = `<div class="alert alert-warning" role="alert">找不到任務 ${threadId} 的詳細資訊。</div>`;
-    formTitle.innerText = "任務詳細";
-    return;
-  }
-
-  const userDetail = await getUserDetail(chatDetail.userId);
-  const userName = userDetail?.name;
+async function renderChatDetail(threadId, chatDetail, userDetail) {
+  const userName = userDetail.name;
 
   // Get the summary data
   const summaryJson = chatDetail.summaryJson;
@@ -53,9 +40,10 @@ async function renderChatDetail(threadId, chatDetail) {
   // Build the HTML for the summary box, which now comes first
   let summaryJsonHtml = "";
   if (summaryJson) {
-    const formattedUpdatedAt = chatDetail.updatedAt
-      ? new Date(chatDetail.updatedAt.seconds * 1000).toLocaleString()
-      : "無";
+    // const formattedUpdatedAt = chatDetail.updatedAt
+    //   ? new Date(chatDetail.updatedAt.seconds * 1000).toLocaleString()
+    //   : "無";
+    const formattedUpdatedAt = formatFirebaseTime(chatDetail.updatedAt);
     const starRatingHtml =
       summaryJson.score !== undefined && summaryJson.score !== null
         ? getStarRating(summaryJson.score)
@@ -187,17 +175,24 @@ async function renderChatDetail(threadId, chatDetail) {
   }
 }
 
-async function getChatDetail(threadId) {
+async function getChatDetail(threadId, token) {
   if (!threadId) {
     return null;
   }
-  const chatDocRef = doc(db, "chat", threadId);
-  const chatDocSnap = await getDoc(chatDocRef);
+  // const chatDocRef = doc(db, "chat", threadId);
+  // const chatDocSnap = await getDoc(chatDocRef);
 
-  let currentChat;
-  if (chatDocSnap.exists()) {
-    currentChat = { id: chatDocSnap.id, ...chatDocSnap.data() };
-  }
+  // let currentChat;
+  // if (chatDocSnap.exists()) {
+  //   currentChat = { id: chatDocSnap.id, ...chatDocSnap.data() };
+  // }
+  const currentChat = (
+    await fetch(`/api/chat/${threadId}`, {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    }).then((res) => res.json())
+  ).data;
   return currentChat;
 }
 
@@ -205,13 +200,16 @@ async function getUserDetail(userId) {
   if (!userId) {
     return null;
   }
-  const userDocRef = doc(db, "user", userId);
-  const userDocSnap = await getDoc(userDocRef);
+  // const userDocRef = doc(db, "user", userId);
+  // const userDocSnap = await getDoc(userDocRef);
 
-  let currentUser;
-  if (userDocSnap.exists()) {
-    currentUser = { id: userDocSnap.id, ...userDocSnap.data() };
-  }
+  // let currentUser;
+  // if (userDocSnap.exists()) {
+  //   currentUser = { id: userDocSnap.id, ...userDocSnap.data() };
+  // }
+  const currentUser = (
+    await fetch(`/api/user/${userId}`).then((res) => res.json())
+  ).data;
   return currentUser;
 }
 
@@ -235,11 +233,7 @@ async function getUserDetail(userId) {
     loadingDiv.innerHTML = `<div class='text-danger'>LIFF 初始化失敗 - ${initError}</div>`;
     return;
   }
-  // lineIdToken = liff.getDecodedIDToken();
-  // const userId = lineIdToken?.sub || "";
-  // const userName = await getUserProfile();
 
-  // The LIFF login is done, now we can hide the loading spinner
   loadingDiv.classList.add("d-none");
   detailsDiv.classList.remove("d-none");
 
@@ -249,7 +243,27 @@ async function getUserDetail(userId) {
     return;
   }
 
+  const lineIdToken = liff.getDecodedIDToken();
+  const userId = lineIdToken?.sub || "";
+  if (!userId) {
+    detailsDiv.innerHTML = `<div class="alert alert-warning" role="alert">無法取得使用者 ID。</div>`;
+    formTitle.innerText = "任務詳細";
+  }
+
   // Get the chat detail and render it
-  const chatDetail = await getChatDetail(threadId);
-  renderChatDetail(threadId, chatDetail);
+  const userDetail = await getUserDetail(userId);
+  // Check if userDetail exists
+  if (!userDetail) {
+    detailsDiv.innerHTML = `<div class="alert alert-warning" role="alert">找不到user ${userId} 的詳細資訊。</div>`;
+    formTitle.innerText = "任務詳細";
+    return;
+  }
+  const chatDetail = await getChatDetail(threadId, userDetail.token);
+  // Check if chatDetail exists
+  if (!chatDetail) {
+    detailsDiv.innerHTML = `<div class="alert alert-warning" role="alert">找不到任務 ${threadId} 的詳細資訊。</div>`;
+    formTitle.innerText = "任務詳細";
+    return;
+  }
+  renderChatDetail(threadId, chatDetail, userDetail);
 })();

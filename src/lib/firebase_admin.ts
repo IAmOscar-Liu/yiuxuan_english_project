@@ -48,6 +48,68 @@ export async function getUserDocumentById(
   }
 }
 
+export async function getUserDocumentByInvitationCode(
+  invitationCode: string,
+  option?: { limit?: number; showDebug: boolean }
+): Promise<undefined | { [key: string]: any }> {
+  try {
+    const db = admin.firestore();
+    const userCollection = db.collection("user");
+    const querySnapshot = await userCollection
+      .where("role", "==", "parent")
+      .where("parent_invitation_code", "==", invitationCode)
+      .get();
+
+    const docs = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    if (option?.showDebug) {
+      console.log(
+        `Fetched ${docs.length} user documents for parent_invitation_code ${invitationCode}`
+      );
+    }
+
+    return docs[0];
+  } catch (error) {
+    console.error(
+      `Error getting user documents for parent_invitation_code ${invitationCode}:`,
+      error
+    );
+    return [];
+  }
+}
+
+export async function createUser(doc: {
+  id: string;
+  name: string;
+  originalEmail: string;
+  nickName: string;
+  email: string;
+  role: string;
+  parent_invitation_code: string;
+  createdAt?: string;
+}): Promise<{ success: true } | { success: false; error: string }> {
+  const db = admin.firestore();
+  const userDocRef = db.collection("user").doc(doc.id);
+
+  try {
+    await userDocRef.set({
+      ...doc,
+      createdAt: doc.createdAt ?? admin.firestore.FieldValue.serverTimestamp(),
+    });
+    console.log(`User document created for userId ${doc.id}`);
+    return { success: true };
+  } catch (error) {
+    console.error(`Error creating user document for userId ${doc.id}:`, error);
+    return {
+      success: false,
+      error: `Error creating user document for userId ${doc.id}: ${error}`,
+    };
+  }
+}
+
 export async function logInUser(userId: string) {
   try {
     const db = admin.firestore();
@@ -333,18 +395,50 @@ export async function addSummaryToChat(
 
 export async function getChatDocumentsByUserId(
   userId: string,
-  option?: { limit?: number; showDebug: boolean }
+  option?: {
+    limit?: number;
+    offset?: number;
+    startDate?: string;
+    endDate?: string;
+    showDebug?: boolean;
+  }
 ) {
   try {
     const db = admin.firestore();
     const chatCollection = db.collection("chat");
-    const querySnapshot = await chatCollection
-      .where("userId", "==", userId)
-      .where("summaryJson", "!=", null)
-      .orderBy("updatedAt", "desc")
-      .limit(option?.limit ?? 5)
-      .get();
 
+    // 1. Declare the query variable with 'let' so it can be reassigned.
+    let query: admin.firestore.Query = chatCollection
+      .where("userId", "==", userId)
+      .where("summaryJson", "!=", null);
+
+    // 2. Reassign the 'query' variable each time you add a conditional clause.
+    if (option?.startDate) {
+      query = query.where(
+        "updatedAt",
+        ">=",
+        admin.firestore.Timestamp.fromDate(new Date(option.startDate))
+      );
+    }
+    if (option?.endDate) {
+      query = query.where(
+        "updatedAt",
+        "<=",
+        admin.firestore.Timestamp.fromDate(new Date(option.endDate))
+      );
+    }
+    query = query.orderBy("updatedAt", "desc");
+    if (option?.limit) {
+      query = query.limit(option.limit);
+    }
+    if (option?.offset) {
+      query = query.offset(option.offset);
+    }
+
+    // 3. Chain the final modifiers, execute .get(), and store the result.
+    const querySnapshot = await query.get();
+
+    // 4. Map the results from the final querySnapshot.
     const docs = querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -362,6 +456,8 @@ export async function getChatDocumentsByUserId(
       `Error getting chat documents for userId ${userId} with summaryJson not null:`,
       error
     );
+    // It's helpful to re-throw the error or handle it more explicitly
+    // depending on your application's needs.
     return [];
   }
 }

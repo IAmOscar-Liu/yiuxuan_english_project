@@ -1,10 +1,3 @@
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-import { db } from "./firebase.js";
 import { init } from "./liff.js";
 
 const loadingDiv = document.getElementById("loading");
@@ -23,14 +16,15 @@ let lineIdToken = null;
 let generatedParentCode = null;
 
 async function getUserById(userId) {
-  const q = await getDocs(collection(db, "user"));
-  let currentUser;
-  q.forEach((doc) => {
-    if (doc.id === userId) {
-      currentUser = { id: doc.id, ...doc.data() };
-    }
-  });
-  return currentUser;
+  // const q = await getDocs(collection(db, "user"));
+  // let currentUser;
+  // q.forEach((doc) => {
+  //   if (doc.id === userId) {
+  //     currentUser = { id: doc.id, ...doc.data() };
+  //   }
+  // });
+  // return currentUser;
+  return (await fetch(`/api/user/${userId}`).then((res) => res.json())).data;
 }
 
 // Helper: generate 5-7 char code (A-Z, 0-9)
@@ -123,17 +117,26 @@ form.addEventListener("submit", async (e) => {
   if (role === "student") {
     const codeToValidate = parentInvitationCodeInput.value.trim();
     let isCodeValid = false;
-    const q = await getDocs(collection(db, "user"));
-    q.forEach((doc) => {
-      const data = doc.data();
-      if (
-        data.role === "parent" &&
-        data.parent_invitation_code === codeToValidate
-      ) {
-        isCodeValid = true;
-        parentId = doc.id;
-      }
-    });
+    // const q = await getDocs(collection(db, "user"));
+    // q.forEach((doc) => {
+    //   const data = doc.data();
+    //   if (
+    //     data.role === "parent" &&
+    //     data.parent_invitation_code === codeToValidate
+    //   ) {
+    //     isCodeValid = true;
+    //     parentId = doc.id;
+    //   }
+    // });
+    const parentData = (
+      await fetch(
+        `/api/user/parent/${encodeURIComponent(codeToValidate)}`
+      ).then((res) => res.json())
+    ).data;
+    if (parentData) {
+      isCodeValid = true;
+      parentId = parentData.id;
+    }
 
     if (!isCodeValid) {
       showMessage(`此家長邀請碼無效：${codeToValidate}`);
@@ -156,12 +159,25 @@ form.addEventListener("submit", async (e) => {
   };
 
   try {
-    await setDoc(doc(db, "user", userDoc.id), userDoc);
+    // await setDoc(doc(db, "user", userDoc.id), userDoc);
+    const registerResult = await fetch(`/api/user/${userDoc.id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(userDoc),
+    }).then((res) => res.json());
+
+    if (!registerResult.success) throw new Error(registerResult.error);
+
     showMessage("恭喜您，帳號已建立，請點擊『我的身份』再次登入！", "success");
 
     fetch("/api/push-message", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Bearer ${registerResult.token}`,
+      },
       body: JSON.stringify({
         userId: userDoc.id,
         message: "恭喜您，帳號已建立，請點擊主選單『我的身份』再次登入！",
@@ -171,7 +187,10 @@ form.addEventListener("submit", async (e) => {
     if (userDoc.role === "student") {
       fetch("/api/link-student-to-parent", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${registerResult.token}`,
+        },
         body: JSON.stringify({
           userId: userDoc.id,
           userName: userDoc.name,

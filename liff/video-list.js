@@ -1,9 +1,4 @@
 import { initWithSearchParams } from "./liff.js";
-import {
-  doc,
-  getDoc,
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-import { db } from "./firebase.js";
 
 const loadingDiv = document.getElementById("loading");
 // Updated element IDs to match the new HTML structure
@@ -13,28 +8,24 @@ const videoList = document.getElementById("video-list");
 let lineIdToken = null;
 
 async function renderVideos(userId) {
-  // Query the specific user document by userId
-  const userDocRef = doc(db, "user", userId);
-  const userDocSnap = await getDoc(userDocRef);
+  // // Query the specific user document by userId
+  // const userDocRef = doc(db, "user", userId);
+  // const userDocSnap = await getDoc(userDocRef);
 
-  let currentUser;
-  if (userDocSnap.exists()) {
-    currentUser = { id: userDocSnap.id, ...userDocSnap.data() };
-  }
+  // let currentUser;
+  // if (userDocSnap.exists()) {
+  //   currentUser = { id: userDocSnap.id, ...userDocSnap.data() };
+  // }
+  const currentUser = (
+    await fetch(`/api/user/${userId}`).then((res) => res.json())
+  ).data;
 
   if (currentUser) {
-    // Define the list of videos for the user
-    // const videos = [
-    //   {
-    //     title: "填寫個人基本資料",
-    //     surveyName: "profile",
-    //   },
-    //   {
-    //     title: "填寫量表內容",
-    //     surveyName: "formal_scale_sections",
-    //   },
-    // ];
-    const videos = await fetch("/api/video/list").then((res) => res.json());
+    const videos = await fetch("/api/video/list", {
+      headers: {
+        authorization: `Bearer ${currentUser.token}`,
+      },
+    }).then((res) => res.json());
 
     // Safely get the names of completed video, even if the array is null
     const completedVideos = (currentUser.completedVideos ?? [])

@@ -37,7 +37,10 @@ import { isFuzzyMatch } from "./lib/isFuzzyMatch";
 import { OpenAILib } from "./lib/openAI";
 import { limiter } from "./lib/rateLimit";
 import { readRichMenuBId } from "./lib/readRichMenuId";
+import authenticateToken from "./middleware/authenticateToken";
+import ChatRoute from "./router/chat";
 import SurveyRoute from "./router/survey";
+import UserRoute from "./router/user";
 import VideoRoute from "./router/video";
 
 // create LINE SDK config from env variables
@@ -60,6 +63,7 @@ app.post(
   "/api/link-student-to-parent",
   cors(corsOptions),
   express.json(),
+  authenticateToken,
   async (req, res) => {
     // Make the function async
     const { userId, userName, parentId } = req.body;
@@ -84,6 +88,7 @@ app.post(
   "/api/push-message",
   cors(corsOptions),
   express.json(),
+  authenticateToken,
   async (req, res) => {
     // Make the function async
     const { userId, message } = req.body;
@@ -131,6 +136,8 @@ app.post(
   }
 );
 
+app.use("/api/user", UserRoute);
+app.use("/api/chat", ChatRoute);
 app.use("/api/survey", SurveyRoute);
 app.use("/api/video", VideoRoute);
 
@@ -240,7 +247,9 @@ function handleEvent(event: webhook.Event) {
               associatedStudents: user.associated_students,
             });
           }
-          const chatDocs = await getChatDocumentsByUserId(user.id);
+          const chatDocs = await getChatDocumentsByUserId(user.id, {
+            limit: 5,
+          });
           return handleLearningSummaryCarouselMessage({
             replyToken: event.replyToken,
             chats: chatDocs,
@@ -528,7 +537,7 @@ function handleEvent(event: webhook.Event) {
           );
           const { id, name } = JSON.parse(payloadString || "{}");
           if (!id) return Promise.resolve(null);
-          const chatDocs = await getChatDocumentsByUserId(id);
+          const chatDocs = await getChatDocumentsByUserId(id, { limit: 5 });
           return handleLearningSummaryCarouselMessage({
             replyToken: event.replyToken,
             chats: chatDocs,

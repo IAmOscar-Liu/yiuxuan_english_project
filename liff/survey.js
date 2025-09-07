@@ -4,6 +4,20 @@ const loadingDiv = document.getElementById("loading");
 const detailsDiv = document.getElementById("task-details");
 const formTitle = document.getElementById("form-title");
 
+async function getUserDoc(userId, token) {
+  if (!userId) return null;
+  //   const userDocRef = doc(db, "user", userId);
+  //   const userDocSnap = await getDoc(userDocRef);
+  //   return userDocSnap.exists() ? userDocSnap.data() : null;
+  return (
+    await fetch(`/api/user/${userId}`, {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    }).then((res) => res.json())
+  ).data;
+}
+
 // ---------- helpers ----------
 function el(tag, cls = "", html = "") {
   const n = document.createElement(tag);
@@ -46,7 +60,7 @@ function isoForFilename(d = new Date()) {
 }
 
 // ---------- renderers ----------
-function renderProfileSurvey(json, userId) {
+function renderProfileSurvey(json, userId, token) {
   formTitle.innerText = json.title || "壹、基本資料";
   const form = el("form", "vstack gap-3", "");
   form.id = "survey-form";
@@ -124,7 +138,7 @@ function renderProfileSurvey(json, userId) {
     }
     setBusy(submitBtn, true);
     try {
-      await postSurvey("profile", userId, filledJson);
+      await postSurvey("profile", userId, filledJson, token);
     } finally {
       setBusy(submitBtn, false);
     }
@@ -178,7 +192,7 @@ function collectProfileAnswers(json) {
   return { ok, filledJson: filled, firstErrorEl };
 }
 
-function renderFormalScale(json, userId) {
+function renderFormalScale(json, userId, token) {
   formTitle.innerText = json.title || "貳、正式量表內容";
   const hint = el(
     "div",
@@ -259,7 +273,7 @@ function renderFormalScale(json, userId) {
     // await postSurvey("formal_scale_sections", userId, filledJson);
     setBusy(btn, true);
     try {
-      await postSurvey("formal_scale_sections", userId, filledJson);
+      await postSurvey("formal_scale_sections", userId, filledJson, token);
     } finally {
       setBusy(btn, false);
     }
@@ -296,7 +310,7 @@ function collectFormalAnswers(json) {
 // ---------- submit ----------
 // let surveyName, userId;
 
-async function postSurvey(name, userId, answeredJson) {
+async function postSurvey(name, userId, answeredJson, token) {
   // attach metadata before persisting
   const payload = {
     surveyName: name,
@@ -310,7 +324,10 @@ async function postSurvey(name, userId, answeredJson) {
   try {
     const res = await fetch(`/api/survey/${name}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -322,8 +339,11 @@ async function postSurvey(name, userId, answeredJson) {
   }
 }
 
-async function loadSurveyJson(surveyName) {
-  const res = await fetch(`/api/survey/${surveyName}`, { cache: "no-store" });
+async function loadSurveyJson(surveyName, token) {
+  const res = await fetch(`/api/survey/${surveyName}`, {
+    cache: "no-store",
+    headers: { authorization: `Bearer ${token}` },
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return await res.json();
 }
@@ -346,17 +366,33 @@ async function loadSurveyJson(surveyName) {
   loadingDiv.classList.add("d-none");
   detailsDiv.classList.remove("d-none");
 
-  if (!surveyName || !userId) {
+  if (!surveyName) {
     formTitle.textContent = "問卷內容";
-    detailsDiv.innerHTML = `<div class="alert alert-warning">URL中缺少 name 或 userId 參數。</div>`;
+    detailsDiv.innerHTML = `<div class="alert alert-warning">URL中缺少 name 參數。</div>`;
+    return;
+  }
+
+  if (!userId) {
+    const lineIdToken = liff.getDecodedIDToken();
+    userId = lineIdToken?.sub || "";
+  }
+
+  if (!userId) {
+    detailsDiv.innerHTML = `<div class='text-danger'>無法取得使用者 ID。</div>`;
     return;
   }
 
   try {
-    const json = await loadSurveyJson(surveyName);
-    if (surveyName === "profile") renderProfileSurvey(json, userId);
+    // const json = await loadSurveyJson(surveyName);
+    const currentUser = await getUserDoc(userId);
+    if (!currentUser) throw new Error("Failed to load current user");
+
+    const json = await loadSurveyJson(surveyName, currentUser.token);
+
+    if (surveyName === "profile")
+      renderProfileSurvey(json, userId, currentUser.token);
     else if (surveyName === "formal_scale_sections")
-      renderFormalScale(json, userId);
+      renderFormalScale(json, userId, currentUser.token);
     else throw new Error("Survey not found");
   } catch (err) {
     console.error("[Survey] load failed:", err);

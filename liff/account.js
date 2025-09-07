@@ -1,9 +1,5 @@
-import {
-  doc,
-  getDoc,
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-import { db } from "./firebase.js";
 import { initWithSearchParams } from "./liff.js";
+import { formatFirebaseTime } from "./utils.js";
 
 let lineIdToken = null;
 
@@ -12,14 +8,17 @@ const form = document.getElementById("register-form");
 const formTitle = document.getElementById("form-title"); // Get the form title element
 
 async function renderAccount(userId) {
-  // Query the specific user document by userId
-  const userDocRef = doc(db, "user", userId);
-  const userDocSnap = await getDoc(userDocRef);
+  // // Query the specific user document by userId
+  // const userDocRef = doc(db, "user", userId);
+  // const userDocSnap = await getDoc(userDocRef);
 
-  let currentUser;
-  if (userDocSnap.exists()) {
-    currentUser = { id: userDocSnap.id, ...userDocSnap.data() };
-  }
+  // let currentUser;
+  // if (userDocSnap.exists()) {
+  //   currentUser = { id: userDocSnap.id, ...userDocSnap.data() };
+  // }
+  const currentUser = (
+    await fetch(`/api/user/${userId}`).then((res) => res.json())
+  ).data;
 
   if (currentUser) {
     // Start building the HTML for the user's account details
@@ -59,7 +58,7 @@ async function renderAccount(userId) {
     userDetailsHtml += `
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 <strong>註冊時間:</strong>
-                <span>${new Date(currentUser.createdAt).toLocaleString()}</span>
+                <span>${formatFirebaseTime(currentUser.createdAt)}</span>
               </li>
             </ul>
           </div>
