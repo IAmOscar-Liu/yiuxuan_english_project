@@ -44,7 +44,11 @@ export function isVideoCourseCompleted(user: { [key: string]: any }) {
   const completedVideos = user.completedVideos;
   if (!Array.isArray(completedVideos) || completedVideos.length === 0)
     return false;
-  const nameSet = new Set(completedVideos.map((video) => video.name));
+  const nameSet = new Set(
+    completedVideos
+      .filter((video) => !!video.submittedAt)
+      .map((video) => video.name)
+  );
   return Object.keys(VIDEO_PATHS).every((name) => nameSet.has(name));
 }
 
