@@ -551,12 +551,12 @@ function handleEvent(event: webhook.Event) {
 }
 
 if (process.env.NODE_ENV === "development") {
-  // Set static folder
-  // app.use(express.static(__dirname + "/../liff/"));
+  // // Set static folder
+  // // app.use(express.static(__dirname + "/../liff/"));
   app.use(express.static(path.join(__dirname, "../liff")));
 
-  // Handle SPA
-  // app.get(/.*/, (_, res) => res.sendFile(__dirname + "/../liff/index.html"));
+  // // Handle SPA
+  // // app.get(/.*/, (_, res) => res.sendFile(__dirname + "/../liff/index.html"));
   app.get(/.*/, (_, res) =>
     res.sendFile(path.join(__dirname, "../liff/index.html"))
   );

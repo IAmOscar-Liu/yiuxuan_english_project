@@ -10,6 +10,10 @@ manualLinkRichMenu({
   richMenuId: "richmenu-a552b0592f689a17a2f1895a3c788e36",
 });
 
+// manualUnLinkRichMenu({
+//   userId: "U8a4e9ad0021ae7b716ea668fe81d6bfc",
+// });
+
 async function manualLinkRichMenu({
   userId,
   richMenuId,
@@ -23,4 +27,11 @@ async function manualLinkRichMenu({
   console.log(
     `RichMenuId '${richMenuId}' has been manually linked to user '${userId}'`
   );
+}
+
+async function manualUnLinkRichMenu({ userId }: { userId: string }) {
+  // client.unlinkRichMenuIdFromUser("U8a4e9ad0021ae7b716ea668fe81d6bfc");
+  await client.unlinkRichMenuIdFromUser(userId);
+
+  console.log(`RichMenu has been manually unlinked from user '${userId}'`);
 }
