@@ -5,12 +5,12 @@ import { handleTextMessage } from "./textMessage";
 
 function buildLearningSummaryFlexMessage({
   id,
-  summaryJson,
+  report,
   updatedAt,
 }: {
   [field: string]: any;
 }) {
-  const starCount = summaryJson.score ? Math.round(summaryJson.score) : 0;
+  const starCount = report.score ? Math.round(report.score) : 0;
   const lightStarUrl =
     "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png";
   const darkStarUrl =
@@ -26,7 +26,7 @@ function buildLearningSummaryFlexMessage({
       aspectMode: "cover",
       action: {
         type: "uri",
-        uri: "https://line.me/",
+        uri: `${process.env.LINE_LIFF_URL}/chat-details.html?threadId=${id}`,
       },
     },
     body: {
@@ -35,13 +35,13 @@ function buildLearningSummaryFlexMessage({
       contents: [
         {
           type: "text",
-          text: summaryJson.topic ?? "N/A",
+          text: report.topic ?? "N/A",
           weight: "bold",
           size: "xl",
         },
         {
           type: "text",
-          text: summaryJson.involvedKnowledge ?? "N/A", // <-- Add your subtitle text here
+          text: report.topics.join("、") ?? "N/A", // <-- Add your subtitle text here
           size: "sm",
           color: "#888888",
           margin: "md",
@@ -79,8 +79,8 @@ function buildLearningSummaryFlexMessage({
             {
               type: "text",
               text:
-                typeof summaryJson.score === "number"
-                  ? String(summaryJson.score.toFixed(1))
+                typeof report.score === "number"
+                  ? String(report.score.toFixed(1))
                   : "N/A",
               size: "sm",
               color: "#999999",
@@ -109,7 +109,7 @@ function buildLearningSummaryFlexMessage({
                 },
                 {
                   type: "text",
-                  text: summaryJson.comment ?? "N/A",
+                  text: report.comment ?? "N/A",
                   wrap: true,
                   color: "#666666",
                   size: "sm",

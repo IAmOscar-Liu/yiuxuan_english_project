@@ -13,7 +13,6 @@ const parentInvitationCodeInput = document.getElementById(
 const formMessage = document.getElementById("form-message");
 
 let lineIdToken = null;
-let generatedParentCode = null;
 
 async function getUserById(userId) {
   // const q = await getDocs(collection(db, "user"));
@@ -25,16 +24,6 @@ async function getUserById(userId) {
   // });
   // return currentUser;
   return (await fetch(`/api/user/${userId}`).then((res) => res.json())).data;
-}
-
-// Helper: generate 5-7 char code (A-Z, 0-9)
-function generateCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const len = Math.floor(Math.random() * 3) + 5; // 5~7
-  let code = "";
-  for (let i = 0; i < len; i++)
-    code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
 }
 
 // Helper: show message
@@ -52,17 +41,10 @@ function updateRoleFields() {
   if (roleStudent.checked) {
     studentExtra.classList.remove("d-none");
     parentInvitationCodeInput.required = true;
-    generatedParentCode = null;
   } else {
     studentExtra.classList.add("d-none");
     parentInvitationCodeInput.required = false;
     parentInvitationCodeInput.value = "";
-  }
-
-  if (roleParent.checked) {
-    generatedParentCode = generateCode();
-  } else {
-    generatedParentCode = null;
   }
 }
 
@@ -112,6 +94,7 @@ form.addEventListener("submit", async (e) => {
   const email = emailInput.value.trim();
   let parentInvitationCode = null;
   let parentId = null;
+  let parentPlan = null;
 
   // If student, validate the parent invitation code
   if (role === "student") {
@@ -136,6 +119,7 @@ form.addEventListener("submit", async (e) => {
     if (parentData) {
       isCodeValid = true;
       parentId = parentData.id;
+      parentPlan = parentData.plan;
     }
 
     if (!isCodeValid) {
@@ -153,8 +137,8 @@ form.addEventListener("submit", async (e) => {
     nickName,
     email,
     role,
-    parent_invitation_code:
-      role === "parent" ? generatedParentCode : parentInvitationCode,
+    parent_invitation_code: parentInvitationCode,
+    plan: role === "student" ? parentPlan : "basic",
     createdAt: new Date().toISOString(),
   };
 

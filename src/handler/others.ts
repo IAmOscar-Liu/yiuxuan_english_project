@@ -1,5 +1,9 @@
 import { messagingApi } from "@line/bot-sdk";
 import client from "../lib/client";
+import {
+  completeVideoCourse,
+  getChatDocumentById,
+} from "../lib/firebase_admin";
 
 export function handleLearningSummaryMessage({
   replyToken,
@@ -19,20 +23,15 @@ export function handleLearningSummaryMessage({
 
   const templateMessage: messagingApi.Message = {
     type: "template",
-    altText: "您想要檢視本次學習的成果圖卡嗎？",
+    altText: "點此檢視本次學習的成果圖卡",
     template: {
-      type: "confirm",
-      text: "您想要檢視本次學習的成果圖卡嗎？",
+      type: "buttons",
+      text: "點此檢視本次學習的成果圖卡",
       actions: [
         {
           type: "postback",
-          label: "是",
+          label: "查看成果圖卡",
           data: `user_request_learning_summary_card:${threadId}`,
-        },
-        {
-          type: "postback",
-          label: "否",
-          data: "user_not_request_learning_summary_card",
         },
       ],
     },
@@ -42,4 +41,20 @@ export function handleLearningSummaryMessage({
     replyToken,
     messages: [echo, templateMessage],
   });
+}
+
+export async function completeVideoCourseByThreadId(threadId: string) {
+  try {
+    const chatDoc = await getChatDocumentById(threadId);
+    if (!chatDoc) throw new Error("Chat document not found");
+    await completeVideoCourse({
+      userId: chatDoc.userId,
+      name: chatDoc.courseKey,
+      completeQA: true,
+    });
+    return true;
+  } catch (error) {
+    console.error(`Fail to complete video course - ${error}`);
+    return false;
+  }
 }

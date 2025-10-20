@@ -7,6 +7,7 @@ import {
   getUserDocumentByInvitationCode,
 } from "../lib/firebase_admin";
 import { generateToken } from "../lib/token";
+import { generateCode } from "../lib/helper";
 
 const router = Router();
 
@@ -32,7 +33,11 @@ router.get("/:id", cors(corsOptions), async (req, res) => {
     data: result
       ? {
           ...result,
-          token: generateToken({ id: result.id }),
+          token: generateToken({
+            id: result.id,
+            role: result.role,
+            plan: result.plan,
+          }),
         }
       : null,
   });
@@ -47,18 +52,24 @@ router.post("/:id", cors(corsOptions), express.json(), async (req, res) => {
     email,
     role,
     parent_invitation_code,
+    plan,
     createdAt,
   } = req.body;
   if (!id) return res.status(400).json({ error: "Missing id" });
-  if (
-    !name ||
-    !originalEmail ||
-    !nickName ||
-    !email ||
-    !role ||
-    !parent_invitation_code
-  )
+  if (!name || !originalEmail || !nickName || !email || !role)
     return res.status(400).json({ error: "Missing required fields in body" });
+
+  let final_parent_invitation_code = parent_invitation_code;
+
+  if (role === "parent") {
+    let code;
+    let existingUser = null;
+    do {
+      code = generateCode();
+      existingUser = await getUserDocumentByInvitationCode(code);
+    } while (existingUser);
+    final_parent_invitation_code = code;
+  }
 
   const payload = {
     id,
@@ -67,13 +78,19 @@ router.post("/:id", cors(corsOptions), express.json(), async (req, res) => {
     nickName,
     email,
     role,
-    parent_invitation_code,
+    parent_invitation_code: final_parent_invitation_code,
+    plan: plan ?? "basic",
     createdAt,
   };
   const result = await createUser(payload);
   res.json(
     result.success
-      ? { ...result, token: generateToken({ id: payload.id }) }
+      ? {
+          ...result,
+          token: generateToken({
+            id: payload.id,
+          }),
+        }
       : result
   );
 });

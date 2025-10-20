@@ -1,0 +1,62 @@
+{
+  "title": "生活滿意度量表",
+  "description": "這部分是關於您對個人生活品質的看法與感受。請根據您的同意程度，從7個選項中擇一回答",
+  "scale": "likert-7",
+  "rating_options": [
+    {
+      "value": 7,
+      "label": "非常同意"
+    },
+    {
+      "value": 6,
+      "label": "同意"
+    },
+    {
+      "value": 5,
+      "label": "有點同意"
+    },
+    {
+      "value": 4,
+      "label": "普通"
+    },
+    {
+      "value": 3,
+      "label": "有點不同意"
+    },
+    {
+      "value": 2,
+      "label": "不同意"
+    },
+    {
+      "value": 1,
+      "label": "非常不同意"
+    }
+  ],
+  "questions": [
+    {
+      "code": "1",
+      "text": "在大多數方面，我的生活接近理想。",
+      "answer": null
+    },
+    {
+      "code": "2",
+      "text": "我的生活條件良好。",
+      "answer": null
+    },
+    {
+      "code": "3",
+      "text": "我對自己的生活感到滿意。",
+      "answer": null
+    },
+    {
+      "code": "4",
+      "text": "到目前為止，我已得到我認為重要的事物。",
+      "answer": null
+    },
+    {
+      "code": "5",
+      "text": "如果我人生能再活一遍，我幾乎不會做任何改變。",
+      "answer": null
+    }
+  ]
+}

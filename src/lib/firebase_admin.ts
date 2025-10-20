@@ -1,6 +1,7 @@
 // Import the Firebase Admin SDK
 import * as admin from "firebase-admin";
-import { OpenAILib } from "./openAI";
+import { OpenAILib, OpenAIReport } from "./openAI";
+import { PaginationParams, PaginationResponse } from "../types";
 
 // Import your service account key JSON file
 // Ensure the path is correct relative to this file
@@ -14,6 +15,42 @@ admin.initializeApp({
 
 // Export the initialized admin objects
 export default admin;
+
+export async function getUsers({
+  page = 1,
+  limit = 10,
+}: PaginationParams): Promise<PaginationResponse<{ [key: string]: any }>> {
+  try {
+    const db = admin.firestore();
+    const usersCollection = db.collection("user");
+
+    // Get total count of documents for pagination metadata
+    const snapshot = await usersCollection.count().get();
+    const total = snapshot.data().count;
+    const totalPages = Math.ceil(total / limit);
+
+    // Ensure page is within valid range
+    const currentPage = Math.max(1, Math.min(page, totalPages));
+    const offset = (currentPage - 1) * limit;
+
+    // Fetch the paginated documents
+    const querySnapshot = await usersCollection
+      .orderBy("createdAt", "desc")
+      .limit(limit)
+      .offset(offset)
+      .get();
+
+    const items = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    return { items, total, page: currentPage, limit, totalPages };
+  } catch (error) {
+    console.error(`Error getting users:`, error);
+    throw error; // Re-throw the error for further handling
+  }
+}
 
 export async function getUserDocumentById(
   userId: string,
@@ -280,15 +317,20 @@ export async function deleteThreadOrRunId(
   }
 }
 
-export async function createChat(threadId: string, userId: string) {
+export async function createChat(
+  threadId: string,
+  userId: string,
+  courseKey?: string
+) {
   const db = admin.firestore();
   const chatDocRef = db.collection("chat").doc(threadId);
   const now = admin.firestore.FieldValue.serverTimestamp();
 
   try {
     await chatDocRef.set({
-      userId: userId,
+      userId,
       createdAt: now,
+      courseKey: courseKey ?? null,
       data: [],
     });
     console.log(
@@ -360,7 +402,58 @@ export async function getChatDocumentById(
     }
   } catch (error) {
     console.error(`Error getting chat document with ID ${threadId}:`, error);
-    throw undefined; // Re-throw the error for further handling
+  }
+}
+
+export async function getChatDocumentsByCourseKey(
+  userId: string,
+  courseKey: string
+) {
+  try {
+    // Get a reference to the Firestore database
+    const db = admin.firestore();
+    const chatCollection = db.collection("chat");
+
+    const querySnapshot = await chatCollection
+      .where("userId", "==", userId)
+      .where("courseKey", "==", courseKey)
+      .orderBy("updatedAt", "desc")
+      .get();
+
+    const docs = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    console.log(
+      `Fetched ${docs.length} chat documents for userId ${userId} and courseKey ${courseKey}`
+    );
+
+    return docs;
+  } catch (error) {
+    console.error(`Error getting chat documents by course key:`, error);
+    return [];
+  }
+}
+
+export async function saveCourseReport(threadId: string, report: OpenAIReport) {
+  try {
+    const db = admin.firestore();
+    const chatDocRef = db.collection("chat").doc(threadId);
+
+    await chatDocRef.set(
+      {
+        report,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    console.log(`save summary to chat ${threadId}`);
+    return true;
+  } catch (error) {
+    console.error(`Error adding summary to chat ${threadId}:`, error);
+    return false;
   }
 }
 
@@ -410,7 +503,7 @@ export async function getChatDocumentsByUserId(
     // 1. Declare the query variable with 'let' so it can be reassigned.
     let query: admin.firestore.Query = chatCollection
       .where("userId", "==", userId)
-      .where("summaryJson", "!=", null);
+      .where("report", "!=", null);
 
     // 2. Reassign the 'query' variable each time you add a conditional clause.
     if (option?.startDate) {
@@ -497,36 +590,65 @@ export async function completeSurvey({
   });
 }
 
+export type CompleteVideoCourse = {
+  name: string;
+  watchedRecords: string[];
+  submittedRecords?: string[];
+  completedRecords?: string[];
+};
+
 export async function completeVideoCourse({
   userId,
-  entry,
+  name,
+  submitted = false,
+  completeQA = false,
 }: {
   userId: string;
-  entry: {
-    name: string; // "profile" | "formal_scale_sections" | others
-    submittedAt?: string; // ISO timestamp
-  };
+  name: string;
+  submitted?: boolean;
+  completeQA?: boolean;
 }): Promise<void> {
   const db = admin.firestore();
   const userRef = db.collection("user").doc(userId);
+  const now = new Date().toISOString();
 
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(userRef);
 
     // Get current array (or initialize)
-    const current =
+    const completedVideos: CompleteVideoCourse[] =
       snap.exists && Array.isArray(snap.get("completedVideos"))
-        ? (snap.get("completedVideos") as any[])
+        ? (snap.get("completedVideos") as CompleteVideoCourse[])
         : [];
 
-    // Replace by name
-    const newEntry = entry.submittedAt ? entry : { name: entry.name };
-    const updated = [
-      ...current.filter((e) => e && e.name !== entry.name),
-      newEntry,
-    ];
+    const existingVideoIndex = completedVideos.findIndex(
+      (v) => v.name === name
+    );
+
+    if (existingVideoIndex !== -1) {
+      // Update existing entry
+      const video = completedVideos[existingVideoIndex];
+      if (!submitted && !completeQA) {
+        video.watchedRecords = [...(video.watchedRecords || []), now];
+      }
+      if (submitted) {
+        video.submittedRecords = [...(video.submittedRecords || []), now];
+      }
+      if (completeQA) {
+        video.completedRecords = [...(video.completedRecords || []), now];
+      }
+    } else {
+      // Create new entry
+      const newEntry: CompleteVideoCourse = {
+        name,
+        watchedRecords: [now],
+      };
+      if (submitted) newEntry.submittedRecords = [now];
+      if (completeQA) newEntry.completedRecords = [now];
+      completedVideos.push(newEntry);
+    }
 
     // Merge so we don't clobber other fields in the user doc
-    tx.set(userRef, { completedVideos: updated }, { merge: true });
+    tx.set(userRef, { completedVideos }, { merge: true });
   });
 }

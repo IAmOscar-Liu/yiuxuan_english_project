@@ -14,9 +14,8 @@ const formTitle = document.getElementById("form-title");
 async function renderChatDetail(threadId, chatDetail, userDetail) {
   const userName = userDetail.name;
 
-  // Get the summary data
-  const summaryJson = chatDetail.summaryJson;
-  const summaryText = chatDetail.summary;
+  // Get the report data
+  const report = chatDetail.report;
 
   // Function to generate star icons based on score
   function getStarRating(score) {
@@ -38,18 +37,18 @@ async function renderChatDetail(threadId, chatDetail, userDetail) {
   }
 
   // Build the HTML for the summary box, which now comes first
-  let summaryJsonHtml = "";
-  if (summaryJson) {
+  let reportHtml = "";
+  if (report) {
     // const formattedUpdatedAt = chatDetail.updatedAt
     //   ? new Date(chatDetail.updatedAt.seconds * 1000).toLocaleString()
     //   : "無";
     const formattedUpdatedAt = formatFirebaseTime(chatDetail.updatedAt);
     const starRatingHtml =
-      summaryJson.score !== undefined && summaryJson.score !== null
-        ? getStarRating(summaryJson.score)
+      report.score !== undefined && report.score !== null
+        ? getStarRating(report.score)
         : "無";
 
-    summaryJsonHtml = `
+    reportHtml = `
           <div class="card shadow-sm mb-4">
             <div class="card-body">
               <h5 class="card-title text-primary mb-3">學習成果</h5>
@@ -64,11 +63,11 @@ async function renderChatDetail(threadId, chatDetail, userDetail) {
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                   <strong>學習主題:</strong>
-                  <span>${summaryJson.topic || "無"}</span>
+                  <span>${report.topic || "無"}</span>
                 </li>
                 <li class="list-group-item">
                   <strong>涉及知識點:</strong>
-                  <div>${summaryJson.involvedKnowledge || "無"}</div>
+                  <div>${report.topics.join("、") || "無"}</div>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                   <strong>評分:</strong>
@@ -76,7 +75,7 @@ async function renderChatDetail(threadId, chatDetail, userDetail) {
                 </li>
                 <li class="list-group-item">
                   <strong>評語:</strong>
-                  <div>${summaryJson.comment || "無"}</div>
+                  <div>${report.comment || "無"}</div>
                 </li>
               </ul>
             </div>
@@ -86,7 +85,7 @@ async function renderChatDetail(threadId, chatDetail, userDetail) {
 
   // Build HTML for the collapsible summary
   let summaryTextHtml = "";
-  if (summaryText) {
+  if (report.summary) {
     summaryTextHtml = `
         <div class="card shadow-sm mb-4">
           <div class="card-header" id="headingSummary">
@@ -99,7 +98,7 @@ async function renderChatDetail(threadId, chatDetail, userDetail) {
           </div>
           <div id="collapseSummary" class="collapse" aria-labelledby="headingSummary">
             <div class="card-body">
-              ${summaryText.replace(/\n/g, "<br>")}
+              ${report.summary.replace(/\n/g, "<br>")}
             </div>
           </div>
         </div>
@@ -144,7 +143,7 @@ async function renderChatDetail(threadId, chatDetail, userDetail) {
 
   // Combine all the HTML and add event listeners for the arrows
   detailsDiv.innerHTML = `
-        ${summaryJsonHtml}
+        ${reportHtml}
         ${summaryTextHtml}
         ${chatMessagesHtml}
       `;
@@ -200,13 +199,6 @@ async function getUserDetail(userId) {
   if (!userId) {
     return null;
   }
-  // const userDocRef = doc(db, "user", userId);
-  // const userDocSnap = await getDoc(userDocRef);
-
-  // let currentUser;
-  // if (userDocSnap.exists()) {
-  //   currentUser = { id: userDocSnap.id, ...userDocSnap.data() };
-  // }
   const currentUser = (
     await fetch(`/api/user/${userId}`).then((res) => res.json())
   ).data;
@@ -239,7 +231,7 @@ async function getUserDetail(userId) {
 
   if (!threadId) {
     detailsDiv.innerHTML = `<div class="alert alert-warning" role="alert">URL中缺少 threadId 參數。</div>`;
-    formTitle.innerText = "任務詳細";
+    formTitle.innerText = "課程詳細";
     return;
   }
 
@@ -247,7 +239,7 @@ async function getUserDetail(userId) {
   const userId = lineIdToken?.sub || "";
   if (!userId) {
     detailsDiv.innerHTML = `<div class="alert alert-warning" role="alert">無法取得使用者 ID。</div>`;
-    formTitle.innerText = "任務詳細";
+    formTitle.innerText = "課程詳細";
   }
 
   // Get the chat detail and render it
@@ -255,14 +247,14 @@ async function getUserDetail(userId) {
   // Check if userDetail exists
   if (!userDetail) {
     detailsDiv.innerHTML = `<div class="alert alert-warning" role="alert">找不到user ${userId} 的詳細資訊。</div>`;
-    formTitle.innerText = "任務詳細";
+    formTitle.innerText = "課程詳細";
     return;
   }
   const chatDetail = await getChatDetail(threadId, userDetail.token);
   // Check if chatDetail exists
   if (!chatDetail) {
-    detailsDiv.innerHTML = `<div class="alert alert-warning" role="alert">找不到任務 ${threadId} 的詳細資訊。</div>`;
-    formTitle.innerText = "任務詳細";
+    detailsDiv.innerHTML = `<div class="alert alert-warning" role="alert">找不到課程 ${threadId} 的詳細資訊。</div>`;
+    formTitle.innerText = "課程詳細";
     return;
   }
   renderChatDetail(threadId, chatDetail, userDetail);

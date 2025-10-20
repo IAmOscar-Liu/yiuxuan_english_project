@@ -307,6 +307,215 @@ function collectFormalAnswers(json) {
   return { ok, filledJson: filled, firstErrorEl };
 }
 
+// This function is now corrected to handle surveys without a 'sections' array.
+function renderSatisfactionWithLifeScale(json, userId, token) {
+  formTitle.innerText = json.title || "生活滿意度量表";
+  const hint = el(
+    "div",
+    "mb-3 small text-secondary",
+    `量表：${json.scale || "Likert-7"}`
+  );
+  detailsDiv.appendChild(hint);
+
+  const card = el("div", "card mb-4");
+  const body = el("div", "card-body p-0");
+
+  const table = el("table", "table table-sm align-middle mb-0");
+  const thead = el("thead", "table-light");
+  const trh = el("tr");
+  trh.appendChild(el("th", "w-50", "題目"));
+  (json.rating_options || []).forEach((opt) => {
+    trh.appendChild(el("th", "text-center", opt.label));
+  });
+  thead.appendChild(trh);
+  table.appendChild(thead);
+
+  const tbody = el("tbody");
+  (json.questions || []).forEach((q) => {
+    const tr = el("tr");
+    tr.appendChild(
+      el(
+        "td",
+        "",
+        `<div class="fw-semibold">${q.code}</div><div>${q.text}</div>`
+      )
+    );
+
+    const name = `q_${q.code}`;
+    (json.rating_options || []).forEach((opt) => {
+      const td = el("td", "text-center");
+      const id = `${name}_${opt.value}`;
+      td.innerHTML = `
+          <input class="form-check-input" type="radio"
+                 name="${name}" id="${id}" value="${opt.value}">
+        `;
+      tr.appendChild(td);
+    });
+
+    const err = el("div", "text-danger small d-none", "此題尚未作答");
+    err.id = `${name}_err`;
+    tr.appendChild(err); // Error message will be handled by collector
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  body.appendChild(table);
+  card.appendChild(body);
+  detailsDiv.appendChild(card);
+
+  const submitWrap = el("div", "d-flex gap-2 my-3");
+  const btn = el("button", "btn btn-primary", "送出");
+  btn.type = "button";
+  btn.addEventListener("click", async () => {
+    const { ok, filledJson, firstErrorEl } = collectFlatFormalAnswers(json);
+    if (!ok) {
+      showAlert("danger", "請完成所有題目");
+      firstErrorEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    setBusy(btn, true);
+    try {
+      await postSurvey(
+        "satisfaction_with_life_scale",
+        userId,
+        filledJson,
+        token
+      );
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+  submitWrap.appendChild(btn);
+  detailsDiv.appendChild(submitWrap);
+}
+
+// This function is now corrected to handle surveys without a 'sections' array.
+function renderChildrenAttributionalStyleQuestionaire(json, userId, token) {
+  formTitle.innerText = json.title || "兒童歸因風格問卷";
+  const hint = el(
+    "div",
+    "mb-3 small text-secondary",
+    `量表：${json.scale || "Forced-Choice"}`
+  );
+  detailsDiv.appendChild(hint);
+
+  const card = el("div", "card mb-4");
+  const body = el("div", "card-body vstack gap-4");
+
+  (json.questions || []).forEach((q) => {
+    const questionBox = el("div", "border rounded p-3");
+    questionBox.appendChild(el("div", "fw-bold mb-2", `${q.code}. ${q.text}`));
+
+    const name = `q_${q.code}`;
+    q.options.forEach((opt) => {
+      const optId = `${name}_${opt.id}`;
+      const wrapper = el("div", "form-check");
+      const input = el("input", "form-check-input");
+      input.type = "radio";
+      input.name = name;
+      input.id = optId;
+      input.value = opt.id;
+
+      const label = el("label", "form-check-label", opt.label);
+      label.htmlFor = optId;
+
+      wrapper.append(input, label);
+      questionBox.appendChild(wrapper);
+    });
+
+    const err = el("div", "text-danger small d-none mt-2", "此題尚未作答");
+    err.id = `${name}_err`;
+    questionBox.appendChild(err);
+    body.appendChild(questionBox);
+  });
+
+  if (json.description) {
+    card.prepend(el("div", "card-header", json.description));
+  }
+  card.appendChild(body);
+  detailsDiv.appendChild(card);
+
+  const submitWrap = el("div", "d-flex gap-2 my-3");
+  const btn = el("button", "btn btn-primary", "送出");
+  btn.type = "button";
+  btn.addEventListener("click", async () => {
+    const { ok, filledJson, firstErrorEl } = collectFlatFormalAnswers(json);
+    if (!ok) {
+      showAlert("danger", "請完成所有題目");
+      firstErrorEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    setBusy(btn, true);
+    try {
+      await postSurvey(
+        "children_attributional_style_questionaire",
+        userId,
+        filledJson,
+        token
+      );
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+  submitWrap.appendChild(btn);
+  detailsDiv.appendChild(submitWrap);
+}
+
+// This function is now corrected to handle surveys without a 'sections' array.
+function renderGrammarSpecificSelfEfficacyScale(json, userId, token) {
+  renderSatisfactionWithLifeScale(json, userId, token);
+  // We need to override the title and submit logic
+  formTitle.innerText = json.title || "文法特定自我效能感量表";
+  const submitBtn = detailsDiv.querySelector("button.btn-primary");
+  if (submitBtn) {
+    const newBtn = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(newBtn, submitBtn);
+    newBtn.addEventListener("click", async () => {
+      const { ok, filledJson, firstErrorEl } = collectFlatFormalAnswers(json);
+      if (!ok) {
+        showAlert("danger", "請完成所有題目");
+        firstErrorEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      setBusy(newBtn, true);
+      try {
+        await postSurvey(
+          "grammar_specific_self_efficacy_scale",
+          userId,
+          filledJson,
+          token
+        );
+      } finally {
+        setBusy(newBtn, false);
+      }
+    });
+  }
+}
+
+function collectFlatFormalAnswers(json) {
+  let ok = true;
+  let firstErrorEl = null;
+
+  const filled = structuredClone(json);
+  filled.questions.forEach((q) => {
+    const name = `q_${q.code}`;
+    const picked = document.querySelector(`input[name="${name}"]:checked`);
+    const errEl = document.getElementById(`${name}_err`);
+    errEl?.classList.add("d-none");
+
+    if (!picked) {
+      ok = false;
+      errEl?.classList.remove("d-none");
+      if (!firstErrorEl) firstErrorEl = errEl;
+    } else {
+      const fq = filled.questions.find((qq) => qq.code === q.code);
+      fq.answer = Number(picked.value);
+    }
+  });
+
+  return { ok, filledJson: filled, firstErrorEl };
+}
+
 // ---------- submit ----------
 // let surveyName, userId;
 
@@ -393,6 +602,16 @@ async function loadSurveyJson(surveyName, token) {
       renderProfileSurvey(json, userId, currentUser.token);
     else if (surveyName === "formal_scale_sections")
       renderFormalScale(json, userId, currentUser.token);
+    else if (surveyName === "satisfaction_with_life_scale")
+      renderSatisfactionWithLifeScale(json, userId, currentUser.token);
+    else if (surveyName === "children_attributional_style_questionaire")
+      renderChildrenAttributionalStyleQuestionaire(
+        json,
+        userId,
+        currentUser.token
+      );
+    else if (surveyName === "grammar_specific_self_efficacy_scale")
+      renderGrammarSpecificSelfEfficacyScale(json, userId, currentUser.token);
     else throw new Error("Survey not found");
   } catch (err) {
     console.error("[Survey] load failed:", err);

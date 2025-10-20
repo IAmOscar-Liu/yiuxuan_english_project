@@ -34,7 +34,10 @@ export default function authenticateToken(
   try {
     // Use jwt.verify directly to handle errors within the middleware
     const decodedPayload = jwt.verify(token, JWT_SECRET);
-    if (typeof decodedPayload !== "string") req.userId = decodedPayload.id;
+    if (typeof decodedPayload !== "string") {
+      // console.log(decodedPayload.data.id);
+      req.userId = decodedPayload.data.id;
+    }
     // Attach the decoded user information to the request object
     // req.user = decodedPayload;
     // Proceed to the next middleware or route handler

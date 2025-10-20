@@ -4,6 +4,8 @@ const loadingDiv = document.getElementById("loading");
 const detailsDiv = document.getElementById("task-details");
 const formTitle = document.getElementById("form-title");
 
+let closeWindowOnSuccess = false;
+
 async function getUserDoc(userId) {
   if (!userId) return null;
   //   const userDocRef = doc(db, "user", userId);
@@ -31,7 +33,10 @@ function showAlert(kind, msg) {
   setTimeout(
     () => {
       box.remove();
-      if (kind === "success") window.history.back();
+      if (kind === "success") {
+        if (closeWindowOnSuccess) return window.close();
+        window.history.back();
+      }
     },
     kind === "success" ? 1500 : 4000
   );
@@ -224,14 +229,14 @@ function renderVideoLesson(
     gateBadge.innerHTML = `<span class="badge text-bg-info">已觀看 ${pct}%（門檻 80%）</span>`;
 
     if (
-      !isVideoWatched &&
       !notifiedComplete &&
       covered >= Math.ceil(floorDuration * THRESHOLD_RATIO)
     ) {
       notifiedComplete = true;
-      gateMsg.textContent = "已達觀看門檻，現在可以開始作答。";
-      setQuizEnabled(true);
-      // Notify server ONCE when threshold reached
+      if (!isVideoWatched) {
+        gateMsg.textContent = "已達觀看門檻，現在可以開始作答。";
+        setQuizEnabled(true);
+      }
       postVideoEvent(chapterName || json.name || "", { userId }, token).catch(
         (e) => console.warn("notify watched failed:", e)
       );
@@ -336,7 +341,7 @@ function renderVideoLesson(
         chapterName || json.name || "",
         {
           userId,
-          submittedAt: new Date().toISOString(),
+          submitted: true,
         },
         token
       );
@@ -357,6 +362,7 @@ function renderVideoLesson(
   const initError = await initWithSearchParams((params) => {
     name = params.get("name"); // chapter key, e.g., "chapter_1"
     userId = params.get("userId");
+    closeWindowOnSuccess = params.get("closeWindowOnSuccess") === "true";
   });
   if (initError) {
     loadingDiv.innerHTML = `<div class='text-danger'>LIFF 初始化失敗 - ${initError}</div>`;
@@ -389,7 +395,10 @@ function renderVideoLesson(
     const json = await loadVideoJson(name, currentUser.token);
 
     const isVideoWatched = !!(currentUser.completedVideos ?? []).find(
-      (v) => v.name == name
+      (v) =>
+        v.name == name &&
+        Array.isArray(v.watchedRecords) &&
+        v.watchedRecords.length > 0
     );
     renderVideoLesson(json, userId, isVideoWatched, name, currentUser.token);
   } catch (err) {

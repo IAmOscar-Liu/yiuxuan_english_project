@@ -36,13 +36,13 @@ function renderChatList(chats, userName) {
   } else {
     chatCardsContainer.innerHTML = chats
       .map((chat) => {
-        const { summaryJson, id, updatedAt } = chat;
-        const title = summaryJson?.topic || `聊天紀錄 ${id.substring(0, 8)}`;
+        const { report, id, updatedAt } = chat;
+        const title = report?.topic || `聊天紀錄 ${id.substring(0, 8)}`;
         const completedTime = formatFirebaseTime(updatedAt);
         // const completedTime = JSON.stringify(updatedAt);
         const scoreHtml =
-          summaryJson?.score !== undefined && summaryJson?.score !== null
-            ? getStarRating(summaryJson.score)
+          report?.score !== undefined && report?.score !== null
+            ? getStarRating(report.score)
             : "";
         const detailUrl = `chat-details.html?threadId=${id}`;
 

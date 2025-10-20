@@ -1,0 +1,47 @@
+{
+  "name": "chapter_6",
+  "title": "Introduction to Conjunctions",
+  "description": "This chapter explains conjunctions (and, but, or, so, because, although, etc.) and how they are used to connect words, phrases, or clauses.",
+  "questions": [
+    {
+      "question": "Which sentence uses 'and' correctly?",
+      "options": {
+        "A": "I like apples, and I like oranges.",
+        "B": "I like apples, and oranges.",
+        "C": "I like apples, I like oranges and.",
+        "D": "I like apples or oranges and."
+      },
+      "answer": "A"
+    },
+    {
+      "question": "Which conjunction is used to show contrast?",
+      "options": {
+        "A": "and",
+        "B": "because",
+        "C": "but",
+        "D": "so"
+      },
+      "answer": "C"
+    },
+    {
+      "question": "Which sentence uses 'because' correctly?",
+      "options": {
+        "A": "She stayed home because it was raining.",
+        "B": "She stayed home so it was raining.",
+        "C": "She stayed home but it was raining.",
+        "D": "She stayed home and it was raining."
+      },
+      "answer": "A"
+    },
+    {
+      "question": "Which sentence shows cause and effect?",
+      "options": {
+        "A": "He was tired, so he went to bed early.",
+        "B": "He was tired, but he went to bed early.",
+        "C": "He was tired, although he went to bed early.",
+        "D": "He was tired, and he went to bed early."
+      },
+      "answer": "A"
+    }
+  ]
+}

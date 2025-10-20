@@ -1,0 +1,69 @@
+{
+  "title": "文法專屬自我效能量表（Grammar-Specific Self-Efficacy Scale, GSES-G）",
+  "description": "本量表共 8 題，採 Likert 五點量表請根據您的同意程度，從5個選項中擇一回答。",
+  "scale": "likert-5",
+  "rating_options": [
+    {
+      "value": 5,
+      "label": "非常同意"
+    },
+    {
+      "value": 4,
+      "label": "同意"
+    },
+    {
+      "value": 3,
+      "label": "中立"
+    },
+    {
+      "value": 2,
+      "label": "不同意"
+    },
+    {
+      "value": 1,
+      "label": "非常不同意"
+    }
+  ],
+  "questions": [
+    {
+      "code": "1",
+      "text": "我有信心能正確完成英文文法練習題。",
+      "answer": null
+    },
+    {
+      "code": "2",
+      "text": "即使文法題目很難，我相信透過努力仍能答對。",
+      "answer": null
+    },
+    {
+      "code": "3",
+      "text": "當我犯文法錯誤時，我能找到方法來修正。",
+      "answer": null
+    },
+    {
+      "code": "4",
+      "text": "即使我在文法測驗中失敗，我仍會再嘗試。",
+      "answer": null
+    },
+    {
+      "code": "5",
+      "text": "每次完成文法練習後，我覺得自己更能堅持學習英文文法。",
+      "answer": null
+    },
+    {
+      "code": "6",
+      "text": "我相信自己能找到合適的方法來解決文法學習的困難。",
+      "answer": null
+    },
+    {
+      "code": "7",
+      "text": "當我遇到文法題不懂時，我能透過不同方式（如課本、老師或同學）找到答案。",
+      "answer": null
+    },
+    {
+      "code": "8",
+      "text": "我感覺自己的英文文法會隨著練習越來越好。",
+      "answer": null
+    }
+  ]
+}

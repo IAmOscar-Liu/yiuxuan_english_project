@@ -3,9 +3,11 @@ import {
   createChat,
   deleteThreadOrRunId,
   insertConversationToChat,
+  saveCourseReport,
   setThreadOrRunId,
 } from "../firebase_admin";
 import { limiter } from "../rateLimit";
+import { createReportString, generateReport, pollRun } from "./utils";
 
 export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY as string,
@@ -14,9 +16,17 @@ export const openai = new OpenAI({
 const assistantId = process.env.OPENAI_ASSISTANT_ID as string; // Your Assistant ID
 
 type OpenAIResult = { threadId?: string } & (
-  | { success: true; data: string }
+  | { success: true; reply: string; completed?: boolean }
   | { success: false; error: any }
 );
+
+export type OpenAIReport = {
+  topic?: string;
+  summary?: string;
+  comment?: string;
+  topics?: string[];
+  score?: number;
+};
 
 export class OpenAILib {
   static async chat(params: {
@@ -27,15 +37,16 @@ export class OpenAILib {
     timeout?: number;
     shouldCreateChat?: boolean;
     shouldSaveConversation?: boolean;
+    courseKey?: string;
   }): Promise<OpenAIResult> {
-    limiter.execute(params.user.id);
+    limiter.execute(params.user);
     return new OpenAILib()._chat(params).then((result) => {
       if (result.threadId && params.shouldSaveConversation) {
-        limiter.finish(params.user.id);
+        limiter.finish(params.user);
         insertConversationToChat(result.threadId, {
           role: "assistant",
           text: result.success
-            ? result.data
+            ? result.reply
             : `很抱歉，系統目前無法回覆你的訊息 - ${result.error}`,
         });
       }
@@ -49,6 +60,7 @@ export class OpenAILib {
     timeout = 60 * 1000,
     shouldCreateChat = false,
     shouldSaveConversation = false,
+    courseKey,
   }: {
     user: {
       [field: string]: any;
@@ -57,6 +69,7 @@ export class OpenAILib {
     timeout?: number;
     shouldCreateChat?: boolean;
     shouldSaveConversation?: boolean;
+    courseKey?: string;
   }): Promise<OpenAIResult> {
     const userId = user.id;
     let timeoutHandle: NodeJS.Timeout | null = null;
@@ -70,9 +83,16 @@ export class OpenAILib {
       // let threadId = userThreads[userId];
       threadId = user.threadId;
       if (!threadId) {
-        const thread = await openai.beta.threads.create();
+        const thread = await openai.beta.threads.create({
+          messages: [
+            {
+              role: "user",
+              content: "我是一名國3學生",
+            },
+          ],
+        });
         threadId = thread.id;
-        if (shouldCreateChat) await createChat(threadId, userId);
+        if (shouldCreateChat) await createChat(threadId, userId, courseKey);
         // userThreads[userId] = threadId;
         await setThreadOrRunId(userId, { threadId });
       }
@@ -113,13 +133,13 @@ export class OpenAILib {
       });
 
       // Run the assistant
-      console.log(`Run the assistant for user ${user.id}`);
+      console.log(`Run the assistant for user ${userId}`);
       const run = await openai.beta.threads.runs.create(threadId, {
         assistant_id: assistantId,
       });
       // userRuns[userId] = run.id;
       await setThreadOrRunId(userId, { runId: run.id });
-      limiter.finish(userId);
+      limiter.finish(user);
 
       // Set up a 60s timeout to cancel the run if it takes too long
       timeoutHandle = setTimeout(async () => {
@@ -135,54 +155,137 @@ export class OpenAILib {
         await deleteThreadOrRunId(userId, { runId: true });
       }, timeout);
 
-      // Wait for completion
-      let runStatus: Awaited<
-        ReturnType<typeof openai.beta.threads.runs.retrieve>
-      >;
-      do {
-        runStatus = await openai.beta.threads.runs.retrieve(run.id, {
+      while (true) {
+        const runStatus = await openai.beta.threads.runs.retrieve(run.id, {
           thread_id: threadId,
         });
-        if (runStatus.status === "failed") {
-          // Clean up run tracking on failure
-          if (timeoutHandle) clearTimeout(timeoutHandle);
-          // delete userRuns[userId];
-          await deleteThreadOrRunId(userId, { runId: true });
-          return { success: false, threadId, error: "Assistant run failed" };
-        }
-        if (runStatus.status !== "completed") {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
+
         if (timedOut) {
+          if (timeoutHandle) clearTimeout(timeoutHandle);
+
           return {
             success: false,
             threadId,
             error: "Request timed out. The run was cancelled.",
           };
         }
-      } while (runStatus.status !== "completed");
-      // console.log(runStatus);
-      // Clean up run tracking on completion
-      if (timeoutHandle) clearTimeout(timeoutHandle);
-      // delete userRuns[userId];
-      await deleteThreadOrRunId(userId, { runId: true });
 
-      // Get assistant's reply
-      const messages = await openai.beta.threads.messages.list(threadId);
-      const latest = messages.data[0];
-      let reply = "";
-      if (
-        latest &&
-        latest.content &&
-        latest.content[0] &&
-        "text" in latest.content[0]
-      ) {
-        reply = (latest.content[0] as { text: { value: string } }).text.value;
-        console.log(`Successfully get AI response`);
-      } else {
-        reply = "No assistant reply found.";
+        // === 新增：偵測 function call (requires_action) ===
+        if (runStatus.status === "requires_action") {
+          const action = runStatus.required_action;
+          const toolCalls = action?.submit_tool_outputs?.tool_calls ?? [];
+
+          // 尋找課程結束的工具呼叫
+          const courseTool = toolCalls.find((tc: any) =>
+            ["course_complete", "course_not_complete"].includes(
+              tc.function.name
+            )
+          );
+
+          if (courseTool) {
+            // 解析參數
+            let args: any = {};
+            try {
+              args = JSON.parse(courseTool.function.arguments || "{}");
+            } catch {}
+
+            const isComplete = courseTool.function.name === "course_complete";
+            const reply = "課程結束-" + (isComplete ? "完成" : "未完成");
+
+            // （可選）提交工具輸出，讓 run 有善後；這裡回傳簡短 OK
+            try {
+              await openai.beta.threads.runs.submitToolOutputs(run.id, {
+                thread_id: threadId,
+                tool_outputs: [
+                  {
+                    tool_call_id: courseTool.id,
+                    output: JSON.stringify({ ok: true }),
+                  },
+                ],
+              });
+            } catch (e) {
+              // 就算提交失敗也不阻塞結束流程
+              console.error("Failed to submit tool outputs", e);
+            }
+
+            let report;
+            if (isComplete) {
+              try {
+                await pollRun({ threadId, runId: run.id });
+                report = await generateReport({ threadId, assistantId });
+              } catch (e) {
+                console.error("Failed to generate report:", e);
+              }
+            }
+
+            // 清理 timeout 與 in-memory 狀態
+            if (timeoutHandle) clearTimeout(timeoutHandle);
+            // delete userRuns[userId];
+            await deleteThreadOrRunId(userId, { runId: true });
+
+            // 刪除 thread
+            try {
+              await openai.beta.threads.delete(threadId);
+            } catch (e) {
+              // 刪除失敗不致命，繼續回覆
+              console.warn("Failed to delete thread:", e);
+            }
+            // delete userThreads[userId];
+            await deleteThreadOrRunId(userId, { threadId: true });
+
+            // 回傳結果（可包含回傳參數以利前端記錄）
+            if (report) {
+              await saveCourseReport(threadId, report);
+            }
+            const replyMsg = isComplete
+              ? report
+                ? createReportString(report)
+                : "很抱歉，系統目前無法產生學習成果報告"
+              : "課程結束(未完成)";
+            return {
+              success: true,
+              threadId,
+              reply: replyMsg,
+              completed: isComplete,
+            };
+          }
+
+          // 沒有你要的工具呼叫，就繼續等待（或依需求處理其他工具）
+        }
+
+        if (runStatus.status === "failed") {
+          if (timeoutHandle) clearTimeout(timeoutHandle);
+          await deleteThreadOrRunId(userId, { runId: true });
+          return { success: false, threadId, error: "Assistant run failed" };
+        }
+
+        if (runStatus.status === "completed") {
+          // 正常對話路徑：取得助理文字
+          if (timeoutHandle) clearTimeout(timeoutHandle);
+          // delete userRuns[userId];
+          await deleteThreadOrRunId(userId, { runId: true });
+
+          const messages = await openai.beta.threads.messages.list(threadId);
+          const latest = messages.data[0];
+          let reply = "";
+          if (
+            latest &&
+            latest.content &&
+            latest.content[0] &&
+            "text" in latest.content[0]
+          ) {
+            reply = (latest.content[0] as { text: { value: string } }).text
+              .value;
+            console.log(`Successfully get AI response`);
+          } else {
+            reply = "No assistant reply found.";
+          }
+          return { success: true, threadId, reply };
+        }
+
+        // 小睡 1 秒再查
+        await new Promise((r) => setTimeout(r, 1000));
       }
-      return { success: true, threadId, data: reply };
     } catch (err) {
       if (timeoutHandle) clearTimeout(timeoutHandle);
       console.error("AI Error:", err);
@@ -209,7 +312,7 @@ export class OpenAILib {
       // delete userRuns[userId];
       await deleteThreadOrRunId(userId, { threadId: true, runId: true });
 
-      return { success: true, data: "Conversation deleted." };
+      return { success: true, reply: "Conversation deleted." };
     } catch (err) {
       console.error("Error deleting thread:", err);
       return { success: false, error: "Failed to delete conversation" };

@@ -3,6 +3,7 @@ import express, { Router } from "express";
 import { corsOptions } from "../constants/corsOptions";
 import {
   getChatDocumentById,
+  getChatDocumentsByCourseKey,
   getChatDocumentsByUserId,
 } from "../lib/firebase_admin";
 import authenticateToken from "../middleware/authenticateToken";
@@ -23,6 +24,21 @@ router.get(
       startDate: typeof startDate === "string" ? startDate : undefined,
       endDate: typeof endDate === "string" ? endDate : undefined,
     });
+    res.json({ data: result });
+  }
+);
+
+router.get(
+  "/list-by-courseKey",
+  cors(corsOptions),
+  express.json(),
+  authenticateToken,
+  async (req, res) => {
+    const { userId, courseKey } = req.query;
+    if (typeof userId !== "string" || typeof courseKey !== "string")
+      return res.status(400).json({ error: "Missing userId or courseKey" });
+
+    const result = await getChatDocumentsByCourseKey(userId, courseKey);
     res.json({ data: result });
   }
 );

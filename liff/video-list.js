@@ -8,75 +8,161 @@ const videoList = document.getElementById("video-list");
 let lineIdToken = null;
 
 async function renderVideos(userId) {
-  // // Query the specific user document by userId
-  // const userDocRef = doc(db, "user", userId);
-  // const userDocSnap = await getDoc(userDocRef);
-
-  // let currentUser;
-  // if (userDocSnap.exists()) {
-  //   currentUser = { id: userDocSnap.id, ...userDocSnap.data() };
-  // }
   const currentUser = (
     await fetch(`/api/user/${userId}`).then((res) => res.json())
   ).data;
 
-  if (currentUser) {
-    const videos = await fetch("/api/video/list", {
-      headers: {
-        authorization: `Bearer ${currentUser.token}`,
-      },
-    }).then((res) => res.json());
+  if (!currentUser) {
+    videoContainer.innerHTML = `<div class="card-body"><div class="alert alert-warning mb-0" role="alert">找不到使用者 ${userId} 的帳號資訊。</div></div>`;
+    return;
+  }
 
-    // Safely get the names of completed video, even if the array is null
-    const completedVideos = (currentUser.completedVideos ?? [])
-      .filter((video) => video.submittedAt)
-      .map((video) => video.name);
+  const isPrivilegedUser = currentUser.plan === "premium";
 
-    // Clear any previous list items
-    videoList.innerHTML = "";
+  const videosByGroup = await fetch("/api/video/list-available", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: `Bearer ${currentUser.token}`,
+    },
+    body: JSON.stringify({
+      plan: currentUser.plan,
+      completedVideos: currentUser.completedVideos,
+    }),
+  }).then((res) => res.json());
 
-    // Generate and append video items to the list
-    videos.forEach((video) => {
-      const isCompleted = completedVideos.includes(video.name);
-      const listItem = document.createElement("li");
+  // Names of completed videos (those with submittedAt)
+  const completedNames = new Set(
+    (currentUser.completedVideos ?? [])
+      .filter(
+        (v) =>
+          Array.isArray(v?.submittedRecords) && v.submittedRecords.length > 0
+      )
+      .map((v) => v.name)
+  );
 
-      // Style the list item based on completion status
-      listItem.className = `list-group-item d-flex justify-content-between align-items-center ${
+  // Clear previous items and mount an accordion container
+  const host =
+    (typeof videoList !== "undefined" && videoList) ||
+    document.getElementById("videoList") ||
+    (typeof videoContainer !== "undefined" && videoContainer);
+
+  if (!host) {
+    console.warn("No host container found for video list.");
+    return;
+  }
+  host.innerHTML = ""; // wipe previous
+
+  const accordion = document.createElement("div");
+  accordion.id = "videoAccordion";
+  accordion.className = "accordion";
+  host.appendChild(accordion);
+
+  // Render grouped sections as accordion items (default open)
+  Object.entries(videosByGroup).forEach(([groupKey, group]) => {
+    const headingId = `accordion-heading-${groupKey}`;
+    const collapseId = `accordion-collapse-${groupKey}`;
+
+    // Accordion item (remove border, add spacing & shadow)
+    const accItem = document.createElement("div");
+    accItem.className = "accordion-item border-0 mb-3 shadow-sm";
+
+    // Header
+    const h2 = document.createElement("h2");
+    h2.className = "accordion-header";
+    h2.id = headingId;
+
+    const btn = document.createElement("button");
+    // default open: not collapsed + target has 'show'
+    btn.className = "accordion-button";
+    btn.type = "button";
+    btn.setAttribute("data-bs-toggle", "collapse");
+    btn.setAttribute("data-bs-target", `#${collapseId}`);
+    btn.setAttribute("aria-expanded", "true");
+    btn.setAttribute("aria-controls", collapseId);
+    btn.textContent = group.title || `Group ${groupKey}`;
+
+    h2.appendChild(btn);
+
+    // Collapse body (default open -> add 'show')
+    const collapse = document.createElement("div");
+    collapse.id = collapseId;
+    collapse.className = "accordion-collapse collapse show"; // default open
+    collapse.setAttribute("aria-labelledby", headingId);
+    collapse.setAttribute("data-bs-parent", "#videoAccordion");
+
+    const body = document.createElement("div");
+    body.className = "accordion-body p-0";
+
+    // Use a list-group for the items
+    const ul = document.createElement("ul");
+    ul.className = "list-group list-group-flush";
+
+    const items = group.data || [];
+
+    // Find the first uncompleted chapter in this group
+    const firstUncompleted = items.find(
+      (it) => !completedNames.has(it.key)
+    )?.key;
+
+    items.forEach((item) => {
+      const chapterKey = item.key; // e.g., "chapter_1_1"
+      const chapterTitle = item.data?.title ?? chapterKey;
+      const isCompleted = completedNames.has(chapterKey);
+
+      // Allow only completed OR the first uncompleted
+      const isAllowed =
+        isPrivilegedUser || isCompleted || chapterKey === firstUncompleted;
+
+      const li = document.createElement("li");
+      li.className = `list-group-item d-flex justify-content-between align-items-center ${
         isCompleted ? "list-group-item-light text-muted" : ""
       }`;
 
-      // Create the video link
-      const link = document.createElement("a");
-      link.href = `/video.html?userId=${userId}&name=${video.name}`;
-      link.textContent = video.title;
-      link.className = "text-decoration-none";
-
-      // If completed, add strikethrough and disable the link
-      if (isCompleted) {
-        link.style.textDecoration = "line-through";
-        // link.style.pointerEvents = "none";
-        link.classList.add("text-muted");
+      // Link (allowed) or plain text (locked)
+      let left;
+      if (isAllowed) {
+        const link = document.createElement("a");
+        // ✅ href uses the key (chapter_1_1)
+        link.href = `/video.html?userId=${encodeURIComponent(
+          userId
+        )}&name=${encodeURIComponent(chapterKey)}`;
+        link.textContent = chapterTitle;
+        link.className = "text-decoration-none";
+        if (isCompleted) {
+          link.style.textDecoration = "line-through";
+          link.classList.add("text-muted");
+        } else {
+          link.classList.add("text-dark");
+        }
+        left = link;
       } else {
-        link.classList.add("text-dark");
+        const span = document.createElement("span");
+        span.textContent = chapterTitle;
+        span.className = "text-muted";
+        span.style.opacity = "0.6";
+        span.setAttribute("aria-disabled", "true");
+        left = span;
       }
 
-      // Create a status icon (checkmark or arrow)
       const statusIcon = document.createElement("i");
-      if (isCompleted) {
-        statusIcon.className = "bi bi-check-circle-fill text-success fs-4";
-      } else {
-        statusIcon.className = "bi bi-arrow-right-circle fs-4 text-primary";
-      }
+      statusIcon.className = isCompleted
+        ? "bi bi-check-circle-fill text-success fs-5"
+        : isAllowed
+        ? "bi bi-play-circle fs-5 text-primary"
+        : "bi bi-lock-fill text-secondary fs-6";
 
-      // Add the link and icon to the list item
-      listItem.appendChild(link);
-      listItem.appendChild(statusIcon);
-      videoList.appendChild(listItem);
+      li.appendChild(left);
+      li.appendChild(statusIcon);
+      ul.appendChild(li);
     });
-  } else {
-    // Show an error if the user isn't found
-    videoContainer.innerHTML = `<div class="card-body"><div class="alert alert-warning mb-0" role="alert">找不到使用者 ${userId} 的帳號資訊。</div></div>`;
-  }
+
+    body.appendChild(ul);
+    collapse.appendChild(body);
+    accItem.appendChild(h2);
+    accItem.appendChild(collapse);
+    accordion.appendChild(accItem);
+  });
 }
 
 // LIFF init and prefill

@@ -1,0 +1,246 @@
+{
+  "title": "兒童歸因風格問卷（Children’s Attributional Style Questionnaire） ",
+  "description": "請閱讀每個情境，並從兩個選項（A 或 B）中，選擇你覺得比較像你會這樣想的答案。",
+  "questions": [
+    {
+      "code": 1,
+      "text": "你在一次測驗中得了「A」。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我很聰明。" },
+        { "id": 2, "label": "我擅長這次測驗的這個科目。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 2,
+      "text": "有一些你認識的同學說他們不喜歡你。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "有時候別人會對我不好。" },
+        { "id": 2, "label": "有時候我會對別人不好。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 3,
+      "text": "一個好朋友告訴你他討厭你。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我的朋友那天心情不好。" },
+        { "id": 2, "label": "我那天對朋友不太好。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 4,
+      "text": "有人偷了你的錢。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "那個人不誠實。" },
+        { "id": 2, "label": "很多人都不誠實。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 5,
+      "text": "你的爸媽說你做的某樣東西非常棒。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我擅長做某些東西。" },
+        { "id": 2, "label": "我的爸媽喜歡我做的某些東西。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 6,
+      "text": "你打破了一個玻璃杯。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我不夠小心。" },
+        { "id": 2, "label": "有時候我會不小心。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 7,
+      "text": "你和其他同學一起做一個專案，但結果很糟糕。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我和那一組的人合作得不好。" },
+        { "id": 2, "label": "我從來不擅長團隊合作。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 8,
+      "text": "你交了一個新朋友。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我是一個很好相處的人。" },
+        { "id": 2, "label": "我遇到的人都很友善。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 9,
+      "text": "你最近和家人相處得很好。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我平常和家人在一起時都很好相處。" },
+        { "id": 2, "label": "有時候我和家人在一起時才好相處。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 10,
+      "text": "你在學校得了一個很差的成績。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我不是一個好學生。" },
+        { "id": 2, "label": "老師出的考試都很難。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 11,
+      "text": "你走進門時撞到鼻子流血了。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我沒注意自己在走哪裡。" },
+        { "id": 2, "label": "我最近一直都很粗心。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 12,
+      "text": "你的房間很亂。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我那天沒有整理房間。" },
+        { "id": 2, "label": "我通常都不整理房間。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 13,
+      "text": "你媽媽做了你最喜歡吃的晚餐。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "媽媽有時候會為了讓我開心而做一些事。" },
+        { "id": 2, "label": "媽媽通常都喜歡讓我開心。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 14,
+      "text": "你所在的球隊輸了一場比賽。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "隊員們打球的時候都不互相幫忙。" },
+        { "id": 2, "label": "那天隊員們沒有互相幫忙。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 15,
+      "text": "你沒有完成家裡分配的家事。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我那天很懶惰。" },
+        { "id": 2, "label": "我很多天都很懶惰。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 16,
+      "text": "你去了一個遊樂園，玩得很開心。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我通常在遊樂園都玩得很開心。" },
+        { "id": 2, "label": "我通常在很多活動裡都玩得很開心。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 17,
+      "text": "你去參加朋友的派對，玩得很開心。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我的朋友通常都會辦很好玩的派對。" },
+        { "id": 2, "label": "我的朋友那天辦了一個很好玩的派對。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 18,
+      "text": "你遇到一位代課老師，她很喜歡你。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我那天上課的表現很好。" },
+        { "id": 2, "label": "我幾乎每次上課表現都很好。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 19,
+      "text": "你讓朋友們感到開心。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我通常是個很好玩的人。" },
+        { "id": 2, "label": "有時候我是個很好玩的人。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 20,
+      "text": "你完成了一個很難的拼圖。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我擅長拼拼圖。" },
+        { "id": 2, "label": "我擅長做很多事情。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 21,
+      "text": "你去參加球隊選拔，但沒有入選。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我不擅長運動。" },
+        { "id": 2, "label": "其他參加的人都非常擅長運動。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 22,
+      "text": "你考試不及格。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "所有的考試都很難。" },
+        { "id": 2, "label": "只有一些考試很難。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 23,
+      "text": "你在一場球賽中打出全壘打。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "我揮棒的姿勢剛剛好。" },
+        { "id": 2, "label": "投手投了一顆很容易打的球。" }
+      ],
+      "answer": null
+    },
+    {
+      "code": 24,
+      "text": "你在班上交的報告是成績最好的。",
+      "type": "single-choice",
+      "options": [
+        { "id": 1, "label": "班上的其他人沒有很用心寫報告。" },
+        { "id": 2, "label": "我很用心寫這份報告。" }
+      ],
+      "answer": null
+    }
+  ]
+}
