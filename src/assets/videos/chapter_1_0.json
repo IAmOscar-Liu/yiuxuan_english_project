@@ -1,0 +1,57 @@
+{
+  "name": "CH01-Intro",
+  "title": "助動詞總論",
+  "description": "Description of 助動詞總論",
+  "questions": [
+    {
+      "question": "下列何者不是助動詞的功能?",
+      "options": {
+        "A": "做簡答",
+        "B": "做問句",
+        "C": "做否定",
+        "D": "做祈使句"
+      },
+      "answer": "D"
+    },
+    {
+      "question": "下列何字可能不是助動詞?",
+      "options": {
+        "A": "have",
+        "B": "must",
+        "C": "should",
+        "D": "may"
+      },
+      "answer": "A"
+    },
+    {
+      "question": "下列何字不屬於文法類助動詞?",
+      "options": {
+        "A": "do",
+        "B": "did",
+        "C": "have",
+        "D": "should"
+      },
+      "answer": "D"
+    },
+    {
+      "question": "下列何字不屬於情態類助動詞?",
+      "options": {
+        "A": "should",
+        "B": "may",
+        "C": "must",
+        "D": "did"
+      },
+      "answer": "D"
+    },
+    {
+      "question": "助動詞之後通常會放什麼動詞變化?",
+      "options": {
+        "A": "Ving",
+        "B": "Vpp",
+        "C": "VR",
+        "D": "to VR"
+      },
+      "answer": "C"
+    }
+  ]
+}

@@ -6,7 +6,7 @@ import { handleTextMessage } from "./textMessage";
 function buildLearningSummaryFlexMessage({
   id,
   report,
-  updatedAt,
+  createdAt,
 }: {
   [field: string]: any;
 }) {
@@ -41,7 +41,7 @@ function buildLearningSummaryFlexMessage({
         },
         {
           type: "text",
-          text: report.topics.join("、") ?? "N/A", // <-- Add your subtitle text here
+          text: report.involvedKnowledge ?? "N/A", // <-- Add your subtitle text here
           size: "sm",
           color: "#888888",
           margin: "md",
@@ -133,7 +133,7 @@ function buildLearningSummaryFlexMessage({
                 },
                 {
                   type: "text",
-                  text: formatFirebaseDateTime(updatedAt),
+                  text: formatFirebaseDateTime(createdAt),
                   wrap: true,
                   color: "#666666",
                   size: "sm",

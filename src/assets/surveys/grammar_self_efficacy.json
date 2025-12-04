@@ -1,0 +1,87 @@
+{
+  "title": "文法自我效能量表",
+  "description": "請以你目前在英文文法任務中的經驗感受為基準，回答下列題目。",
+  "scale": "likert-7",
+  "rating_options": [
+    {
+      "value": 7,
+      "label": "非常同意"
+    },
+    {
+      "value": 6,
+      "label": "同意"
+    },
+    {
+      "value": 5,
+      "label": "略同意"
+    },
+    {
+      "value": 4,
+      "label": "普通"
+    },
+    {
+      "value": 3,
+      "label": "略不同意"
+    },
+    {
+      "value": 2,
+      "label": "不同意"
+    },
+    {
+      "value": 1,
+      "label": "非常不同意"
+    }
+  ],
+  "questions": [
+    {
+      "code": "1",
+      "text": "我相信自己通常能順利理解文法教學內容。",
+      "answer": null
+    },
+    {
+      "code": "2",
+      "text": "我相信自己能讀懂文法範例句而不會太困難。",
+      "answer": null
+    },
+    {
+      "code": "3",
+      "text": "我相信自己能把英文文法學好。",
+      "answer": null
+    },
+    {
+      "code": "4",
+      "text": "我相信自己能在文法練習中正確使用文法。",
+      "answer": null
+    },
+    {
+      "code": "5",
+      "text": "我相信只要努力，我能明顯提升自己的文法能力。",
+      "answer": null
+    },
+    {
+      "code": "6",
+      "text": "我相信自己能在文法相關的測驗中表現良好。",
+      "answer": null
+    },
+    {
+      "code": "7",
+      "text": "我相信自己能理解文法老師的說明。",
+      "answer": null
+    },
+    {
+      "code": "8",
+      "text": "我相信自己能完成老師指定的文法練習任務。",
+      "answer": null
+    },
+    {
+      "code": "9",
+      "text": "我相信看到新的文法形式時，我通常能理解它。",
+      "answer": null
+    },
+    {
+      "code": "10",
+      "text": "我相信即使文法學習變得困難，我仍能持續下去。",
+      "answer": null
+    }
+  ]
+}

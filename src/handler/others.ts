@@ -43,18 +43,18 @@ export function handleLearningSummaryMessage({
   });
 }
 
-export async function completeVideoCourseByThreadId(threadId: string) {
-  try {
-    const chatDoc = await getChatDocumentById(threadId);
-    if (!chatDoc) throw new Error("Chat document not found");
-    await completeVideoCourse({
-      userId: chatDoc.userId,
-      name: chatDoc.courseKey,
-      completeQA: true,
-    });
-    return true;
-  } catch (error) {
-    console.error(`Fail to complete video course - ${error}`);
-    return false;
-  }
-}
+// export async function markCourseCompletedByThreadId(threadId: string) {
+//   try {
+//     const chatDoc = await getChatDocumentById(threadId);
+//     if (!chatDoc) throw new Error("Chat document not found");
+//     await completeVideoCourse({
+//       userId: chatDoc.userId,
+//       name: chatDoc.courseKey,
+//       completeQA: true,
+//     });
+//     return true;
+//   } catch (error) {
+//     console.error(`Fail to complete video course - ${error}`);
+//     return false;
+//   }
+// }

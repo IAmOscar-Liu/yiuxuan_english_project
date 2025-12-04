@@ -8,6 +8,8 @@ import {
 } from "../lib/firebase_admin";
 import { generateToken } from "../lib/token";
 import { generateCode } from "../lib/helper";
+import authenticateToken from "../middleware/authenticateToken";
+import { auth } from "firebase-admin";
 
 const router = Router();
 
@@ -21,6 +23,21 @@ router.get(
 
     const result = await getUserDocumentByInvitationCode(parentInvitationCode);
     res.json({ data: result ?? null });
+  }
+);
+
+router.get(
+  "/student/:id",
+  cors(corsOptions),
+  authenticateToken,
+  async (req, res) => {
+    const id = req.params.id;
+    if (!id) return res.status(400).json({ error: "Missing id" });
+
+    const result = await getUserDocumentById(id);
+    res.json({
+      data: result ?? null,
+    });
   }
 );
 

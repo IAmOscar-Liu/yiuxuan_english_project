@@ -1,0 +1,57 @@
+{
+  "name": "CH01-C",
+  "title": "助動詞片語互換",
+  "description": "Introduction of 助動詞片語互換",
+  "questions": [
+    {
+      "question": "I called Peter last night, but he didn’t answer the phone. He ____ very busy at that moment.",
+      "options": {
+        "A": "must be",
+        "B": "must was",
+        "C": "must have been",
+        "D": "should be"
+      },
+      "answer": "C"
+    },
+    {
+      "question": "A: Was Rita in her room two hours ago? B: Possible, but she ____ out with her friends because she finished her big test this morning.",
+      "options": {
+        "A": "could have gone",
+        "B": "must have gone",
+        "C": "could go",
+        "D": "must go"
+      },
+      "answer": "A"
+    },
+    {
+      "question": "A: I saw Albert smoking in the street yesterday. B: It ____ him. He never smokes.",
+      "options": {
+        "A": "can't be",
+        "B": "mustn't be",
+        "C": "couldn't have been",
+        "D": "might not have been"
+      },
+      "answer": "C"
+    },
+    {
+      "question": "Luka ___ happy now. He’s got the first prize.",
+      "options": {
+        "A": "must have been",
+        "B": "must be",
+        "C": "can be",
+        "D": "could have been"
+      },
+      "answer": "B"
+    },
+    {
+      "question": "Many people think Judy will join us, but as far as I’m concerned, she ___ join us because she is too shy for this.",
+      "options": {
+        "A": "may not",
+        "B": "can not",
+        "C": "must not",
+        "D": "may"
+      },
+      "answer": "A"
+    }
+  ]
+}

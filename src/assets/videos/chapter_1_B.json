@@ -1,0 +1,57 @@
+{
+  "name": "CH01-B",
+  "title": "情態類助動詞",
+  "description": "Introduction of 情態類助動詞",
+  "questions": [
+    {
+      "question": "下列何者不是情態助動詞?",
+      "options": {
+        "A": "can",
+        "B": "did",
+        "C": "should",
+        "D": "had better"
+      },
+      "answer": "B"
+    },
+    {
+      "question": "下列何者描述為錯?",
+      "options": {
+        "A": "情態助動詞本身就存在意義",
+        "B": "情態助動詞在肯定句中可以省略",
+        "C": "情態助動詞可以拿來簡答和做問句",
+        "D": "情態助動詞也是一種助動詞"
+      },
+      "answer": "B"
+    },
+    {
+      "question": "Which of the following sentences is incorrect?",
+      "options": {
+        "A": "You had not better study harder.",
+        "B": "I can’t jump as high as before.",
+        "C": "Jackson mustn’t litter anywhere in the museum.",
+        "D": "Students should make good use of their time."
+      },
+      "answer": "A"
+    },
+    {
+      "question": "I am the person who has the keys, so you ____ for me.",
+      "options": {
+        "A": "should waiting",
+        "B": "can to wait",
+        "C": "may wait",
+        "D": "must wait"
+      },
+      "answer": "D"
+    },
+    {
+      "question": "Most teachers think that students ____ to study hard. ",
+      "options": {
+        "A": "should",
+        "B": "must",
+        "C": "had better",
+        "D": "need"
+      },
+      "answer": "D"
+    }
+  ]
+}

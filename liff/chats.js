@@ -36,10 +36,9 @@ function renderChatList(chats, userName) {
   } else {
     chatCardsContainer.innerHTML = chats
       .map((chat) => {
-        const { report, id, updatedAt } = chat;
+        const { report, id, createdAt } = chat;
         const title = report?.topic || `聊天紀錄 ${id.substring(0, 8)}`;
-        const completedTime = formatFirebaseTime(updatedAt);
-        // const completedTime = JSON.stringify(updatedAt);
+        const completedTime = formatFirebaseTime(createdAt);
         const scoreHtml =
           report?.score !== undefined && report?.score !== null
             ? getStarRating(report.score)
@@ -72,19 +71,6 @@ function renderChatList(chats, userName) {
 
 async function getChatsByUserId(userId, startDate, endDate) {
   if (!userId) return [];
-  // const constraints = [
-  //   where("userId", "==", userId),
-  //   where("summaryJson", "!=", null),
-  // ];
-  // if (startDate)
-  //   constraints.push(where("updatedAt", ">=", Timestamp.fromDate(startDate)));
-  // if (endDate)
-  //   constraints.push(where("updatedAt", "<=", Timestamp.fromDate(endDate)));
-  // constraints.push(orderBy("updatedAt", "desc"));
-
-  // const q = query(collection(db, "chat"), ...constraints);
-  // const querySnapshot = await getDocs(q);
-  // return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   // 1. Initialize URLSearchParams.
   const params = new URLSearchParams();

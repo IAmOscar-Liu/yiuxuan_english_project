@@ -37,6 +37,7 @@ async function renderSurveys(userId) {
     // Generate and append task items to the list
     surveys.forEach((task) => {
       const isCompleted = completedSurveys.includes(task.surveyName);
+      const isLocked = !currentUser.trialed && task.phase === "2";
       const listItem = document.createElement("li");
 
       // Style the list item based on completion status
@@ -51,7 +52,10 @@ async function renderSurveys(userId) {
       link.className = "text-decoration-none";
 
       // If completed, add strikethrough and disable the link
-      if (isCompleted) {
+      if (isLocked) {
+        link.style.pointerEvents = "none";
+        link.classList.add("text-muted");
+      } else if (isCompleted) {
         link.style.textDecoration = "line-through";
         link.style.pointerEvents = "none";
         link.classList.add("text-muted");
@@ -61,7 +65,9 @@ async function renderSurveys(userId) {
 
       // Create a status icon (checkmark or arrow)
       const statusIcon = document.createElement("i");
-      if (isCompleted) {
+      if (isLocked) {
+        statusIcon.className = "bi bi-lock-fill text-secondary fs-4";
+      } else if (isCompleted) {
         statusIcon.className = "bi bi-check-circle-fill text-success fs-4";
       } else {
         statusIcon.className = "bi bi-arrow-right-circle fs-4 text-primary";

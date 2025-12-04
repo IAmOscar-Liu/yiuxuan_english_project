@@ -243,6 +243,80 @@ export async function linkStudentToParent({
   }
 }
 
+// export async function setThreadOrRunId(
+//   userId: string,
+//   options: { threadId?: string; runId?: string }
+// ) {
+//   try {
+//     const db = admin.firestore();
+//     const userDocRef = db.collection("user").doc(userId);
+
+//     // Only update the fields that are provided
+//     const updateData: { [key: string]: string } = {};
+//     if (options.threadId !== undefined) {
+//       updateData.threadId = options.threadId;
+//     }
+//     if (options.runId !== undefined) {
+//       updateData.runId = options.runId;
+//     }
+
+//     if (Object.keys(updateData).length === 0) {
+//       throw new Error("No threadId or runId provided to update.");
+//     }
+
+//     await userDocRef.set(updateData, { merge: true });
+//     console.log(`Set fields for user ID ${userId}:`, updateData);
+//     return true;
+//   } catch (error) {
+//     console.error(
+//       `Error setting threadId or runId for user ID ${userId}:`,
+//       error
+//     );
+//     // throw error;
+//     return false;
+//   }
+// }
+
+// export async function deleteThreadOrRunId(
+//   userId: string,
+//   options: { threadId?: boolean; runId?: boolean }
+// ) {
+//   try {
+//     const db = admin.firestore();
+//     const userDocRef = db.collection("user").doc(userId);
+
+//     // Build the update object based on options
+//     const updateData: { [key: string]: any } = {};
+//     if (options.threadId) {
+//       updateData.threadId = admin.firestore.FieldValue.delete();
+//     }
+//     if (options.runId) {
+//       updateData.runId = admin.firestore.FieldValue.delete();
+//     }
+
+//     if (Object.keys(updateData).length === 0) {
+//       throw new Error(
+//         "No field specified to delete. Provide threadId and/or runId as true."
+//       );
+//     }
+
+//     // Use set with merge to avoid errors if fields do not exist
+//     await userDocRef.set(updateData, { merge: true });
+//     console.log(
+//       `Deleted fields for user ID ${userId}:`,
+//       Object.keys(updateData).join(", ")
+//     );
+//     return true;
+//   } catch (error) {
+//     console.error(
+//       `Error deleting threadId and/or runId for user ID ${userId}:`,
+//       error
+//     );
+//     // throw error;
+//     return false;
+//   }
+// }
+
 export async function createChat(
   threadId: string,
   userId: string,
@@ -274,6 +348,33 @@ export async function createChat(
     return false;
   }
 }
+
+// export async function insertConversationToChat(
+//   threadId: string,
+//   data: { role: "user" | "assistant"; text: string }
+// ) {
+//   const db = admin.firestore();
+//   const chatDocRef = db.collection("chat").doc(threadId);
+
+//   try {
+//     await chatDocRef.update({
+//       data: admin.firestore.FieldValue.arrayUnion({
+//         role: data.role,
+//         text: data.text,
+//       }),
+//     });
+//     console.log(
+//       `Inserted conversation data to chat ${threadId}: role=${data.role}, text=${data.text}`
+//     );
+//     return true;
+//   } catch (error) {
+//     console.error(
+//       `Error inserting conversation data to chat ${threadId}:`,
+//       error
+//     );
+//     return false;
+//   }
+// }
 
 export async function getChatDocumentById(
   threadId: string,
@@ -337,6 +438,56 @@ export async function getChatDocumentsByCourseKey(
     return [];
   }
 }
+
+// export async function saveCourseReport(threadId: string, report: OpenAIReport) {
+//   try {
+//     const db = admin.firestore();
+//     const chatDocRef = db.collection("chat").doc(threadId);
+
+//     await chatDocRef.set(
+//       {
+//         report,
+//         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+//       },
+//       { merge: true }
+//     );
+
+//     console.log(`save summary to chat ${threadId}`);
+//     return true;
+//   } catch (error) {
+//     console.error(`Error adding summary to chat ${threadId}:`, error);
+//     return false;
+//   }
+// }
+
+// export async function addSummaryToChat(
+//   threadId: string,
+//   summary: {
+//     text: string;
+//     json?: Awaited<ReturnType<typeof OpenAILib.getJsonSummary>>;
+//   }
+// ) {
+//   try {
+//     const db = admin.firestore();
+//     const chatDocRef = db.collection("chat").doc(threadId);
+
+//     // Update the chat document with the summary field
+//     await chatDocRef.set(
+//       {
+//         summary: summary.text,
+//         summaryJson: summary.json ?? null,
+//         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+//       },
+//       { merge: true }
+//     );
+
+//     console.log(`Added summary to chat ${threadId}: ${summary}`);
+//     return true;
+//   } catch (error) {
+//     console.error(`Error adding summary to chat ${threadId}:`, error);
+//     return false;
+//   }
+// }
 
 export async function getChatDocumentsByUserId(
   userId: string,

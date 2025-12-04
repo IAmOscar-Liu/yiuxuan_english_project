@@ -1,0 +1,57 @@
+{
+  "name": "CH01-D",
+  "title": "推測與過去推論",
+  "description": "Introduction of 推測與過去推論",
+  "questions": [
+    {
+      "question": " ___ you able to buy me a book on your way home?",
+      "options": {
+        "A": "can",
+        "B": "could",
+        "C": "Are",
+        "D": "Be"
+      },
+      "answer": "C"
+    },
+    {
+      "question": "Mary ____ sing the song very well when she was young",
+      "options": {
+        "A": "will",
+        "B": "could",
+        "C": "is able to",
+        "D": "could be able to"
+      },
+      "answer": "B"
+    },
+    {
+      "question": "Lisa ____ control in the public, or her parents will get super mad.",
+      "options": {
+        "A": "doesn't have to lose",
+        "B": "hasn't lost",
+        "C": "mustn't to lose",
+        "D": "mustn't lose"
+      },
+      "answer": "D"
+    },
+    {
+      "question": "Rose ____ to the class yesterday because the teacher was sick.",
+      "options": {
+        "A": "mustn't have to come",
+        "B": "didn't have to come",
+        "C": "mustn't come",
+        "D": "needn't come"
+      },
+      "answer": "B"
+    },
+    {
+      "question": "____ she going to fly to the U.S.A. this summer?",
+      "options": {
+        "A": "Is",
+        "B": "Will",
+        "C": "Can",
+        "D": "Was"
+      },
+      "answer": "A"
+    }
+  ]
+}

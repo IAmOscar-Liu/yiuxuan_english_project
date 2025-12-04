@@ -39,10 +39,7 @@ async function renderChatDetail(threadId, chatDetail, userDetail) {
   // Build the HTML for the summary box, which now comes first
   let reportHtml = "";
   if (report) {
-    // const formattedUpdatedAt = chatDetail.updatedAt
-    //   ? new Date(chatDetail.updatedAt.seconds * 1000).toLocaleString()
-    //   : "無";
-    const formattedUpdatedAt = formatFirebaseTime(chatDetail.updatedAt);
+    const formattedCreatedAt = formatFirebaseTime(chatDetail.createdAt);
     const starRatingHtml =
       report.score !== undefined && report.score !== null
         ? getStarRating(report.score)
@@ -59,7 +56,7 @@ async function renderChatDetail(threadId, chatDetail, userDetail) {
                 </li>    
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                   <strong>完成時間:</strong>
-                  <span>${formattedUpdatedAt}</span>
+                  <span>${formattedCreatedAt}</span>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                   <strong>學習主題:</strong>
@@ -67,7 +64,11 @@ async function renderChatDetail(threadId, chatDetail, userDetail) {
                 </li>
                 <li class="list-group-item">
                   <strong>涉及知識點:</strong>
-                  <div>${report.topics.join("、") || "無"}</div>
+                  <div>${
+                    Array.isArray(report.involvedKnowledge)
+                      ? report.involvedKnowledge.join("、")
+                      : report.involvedKnowledge ?? "無"
+                  }</div>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                   <strong>評分:</strong>

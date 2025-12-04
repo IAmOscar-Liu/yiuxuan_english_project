@@ -3,6 +3,7 @@ import cors from "cors";
 import "dotenv/config";
 import express from "express";
 import path from "path";
+import { v4 as uuidv4 } from "uuid";
 import { corsOptions } from "./constants/corsOptions";
 import { VIDEO_PATHS } from "./constants/courseInfo";
 import { richMenuAArea, richMenuBArea } from "./constants/richMenuArea";
@@ -18,10 +19,7 @@ import {
   handleLinkRichMenuIdToUser,
   handleUnLinkRichMenuIdToUser,
 } from "./handler/linkRichMenuIdToUser";
-import {
-  completeVideoCourseByThreadId,
-  handleLearningSummaryMessage,
-} from "./handler/others";
+import { handleLearningSummaryMessage } from "./handler/others";
 import {
   handleChapterItemsQuickReply,
   handleLearningQuickReply,
@@ -35,6 +33,8 @@ import {
 } from "./handler/taskHandler";
 import { handleTextMessage } from "./handler/textMessage";
 import {
+  completeVideoCourse,
+  createChat,
   getChatDocumentById,
   getChatDocumentsByUserId,
   getUserDocumentById,
@@ -45,8 +45,10 @@ import {
 import { formatUserRole } from "./lib/formatter";
 import { isFuzzyMatch } from "./lib/isFuzzyMatch";
 import { OpenAILib } from "./lib/openAI";
+import { createReportString } from "./lib/openAI/utils";
 import { limiter } from "./lib/rateLimit";
 import { readRichMenuBId } from "./lib/readRichMenuId";
+import RedisLib from "./lib/redis";
 import authenticateToken from "./middleware/authenticateToken";
 import AdminRoute from "./router/admin";
 import ChatRoute from "./router/chat";
@@ -61,6 +63,8 @@ const lineMiddleware = middleware({
 
 console.log(process.env.NODE_ENV);
 console.log(process.env.LINE_CHANNEL_SECRET);
+
+RedisLib.clearAllRedisData();
 
 // create Express app
 // about Express itself: https://expressjs.com/
@@ -216,44 +220,60 @@ function handleEvent(event: webhook.Event) {
       });
     }
     if (event.message.text === "開始/結束課程") {
-      return getUserDocumentById(event.source?.userId ?? "").then((user) => {
-        if (!user || !user.isLoggedIn) return Promise.resolve(null);
-        if (hasUncompletedTask(user))
-          return handleTextMessage({
-            replyToken: event.replyToken,
-            text: "您有未完成的任務，請點選主選單『我的任務』查看，完成任務後才可以開始課程喔",
-          });
-        if (!isChapterCompleted(user))
-          return handleTextMessage({
-            replyToken: event.replyToken,
-            text: "您尚未完成第1章的全部課程，請點選主選單『我的任務』查看，所有章節都學習完後才可以開始課程喔",
-          });
-        if (user.threadId) {
+      return getUserDocumentById(event.source?.userId ?? "").then(
+        async (user) => {
+          if (!user || !user.isLoggedIn) return Promise.resolve(null);
+          if (await OpenAILib.getCurrentCourse(user))
+            return handleAlertMessage({
+              replyToken: event.replyToken,
+              text: "是否結束目前課程？如需結束，請點選下方按鈕",
+              action: {
+                type: "postback",
+                label: "結束課程",
+                data: "user_cancel_task",
+              },
+            });
+          if (user.plan !== "premium")
+            return handleTextMessage({
+              replyToken: event.replyToken,
+              text: "您的方案無法使用此功能，如有疑問，請聯絡系統管理員",
+            });
+          if (hasUncompletedTask(user))
+            return handleTextMessage({
+              replyToken: event.replyToken,
+              text: "您有未完成的任務，請點選主選單『我的任務』查看，完成任務後才可以開始課程喔",
+            });
+          if (user.approved !== true)
+            return handleTextMessage({
+              replyToken: event.replyToken,
+              text: "系統管理員為您開通課程後，才可使用此功能喔！如有疑問，請聯絡系統管理員",
+            });
+          if (!isChapterCompleted(user))
+            return handleTextMessage({
+              replyToken: event.replyToken,
+              text: "您尚未完成第1章的全部課程，請點選主選單『我的任務』查看，所有章節都學習完後才可以開始課程喔",
+            });
           return handleAlertMessage({
             replyToken: event.replyToken,
-            text: "是否結束目前課程？如需結束，請點選下方按鈕",
+            text: "請點選下方按鈕開始課程",
             action: {
               type: "postback",
-              label: "結束課程",
-              data: "user_cancel_task",
+              label: "開始課程",
+              data: "user_initiate_task",
             },
           });
         }
-        return handleAlertMessage({
-          replyToken: event.replyToken,
-          text: "請點選下方按鈕開始課程",
-          action: {
-            type: "postback",
-            label: "開始課程",
-            data: "user_initiate_task",
-          },
-        });
-      });
+      );
     }
     if (event.message.text === "學習成果圖卡")
       return getUserDocumentById(event.source?.userId ?? "").then(
         async (user) => {
           if (!user || !user.isLoggedIn) return Promise.resolve(null);
+          if (user.approved !== true)
+            return handleTextMessage({
+              replyToken: event.replyToken,
+              text: "系統管理員為您開通課程後，才可使用此功能喔！如有疑問，請聯絡系統管理員",
+            });
           if (
             user.role === "parent" &&
             Array.isArray(user.associated_students) &&
@@ -277,6 +297,11 @@ function handleEvent(event: webhook.Event) {
     if (event.message.text === "學習記錄")
       return getUserDocumentById(event.source?.userId ?? "").then((user) => {
         if (!user || !user.isLoggedIn) return Promise.resolve(null);
+        if (user.approved !== true)
+          return handleTextMessage({
+            replyToken: event.replyToken,
+            text: "系統管理員為您開通課程後，才可使用此功能喔！如有疑問，請聯絡系統管理員",
+          });
         return handleConfirmMessage({
           replyToken: event.replyToken,
           text: "請選擇您要如何查看學習記錄",
@@ -332,12 +357,12 @@ function handleEvent(event: webhook.Event) {
     return getUserDocumentById(event.source?.userId ?? "").then(
       async (user) => {
         if (user && user.isLoggedIn) {
-          if (user.runId || !limiter.canExecute(user))
+          if (!limiter.canExecute(user))
             return handleTextMessage({
               replyToken: event.replyToken,
               text: "系統正在回覆您的訊息，請稍後......",
             });
-          if (user.threadId) {
+          if (await OpenAILib.getCurrentCourse(user)) {
             if (isFuzzyMatch(textMessage, "Let's call it a day")) {
               return handleAlertMessage({
                 replyToken: event.replyToken,
@@ -352,19 +377,39 @@ function handleEvent(event: webhook.Event) {
             const openAIResult = await OpenAILib.chat({
               user,
               message: textMessage,
-              shouldSaveConversation: true,
             });
-            if (
-              openAIResult.success &&
-              openAIResult.threadId &&
-              openAIResult.completed
-            ) {
-              completeVideoCourseByThreadId(openAIResult.threadId);
-              return handleLearningSummaryMessage({
-                replyToken: event.replyToken,
-                text: openAIResult.reply,
-                threadId: openAIResult.threadId,
-              });
+            if (openAIResult.success && openAIResult.completed) {
+              const threadId = uuidv4();
+              try {
+                await Promise.all([
+                  completeVideoCourse({
+                    userId: user.id,
+                    name: openAIResult.courseKey,
+                    completeQA: true,
+                  }),
+                  createChat(
+                    threadId,
+                    user.id,
+                    openAIResult.courseKey,
+                    openAIResult.history.map((h) => ({
+                      role: h.role,
+                      text: h.content,
+                    })),
+                    openAIResult.report
+                  ),
+                ]);
+                return handleLearningSummaryMessage({
+                  replyToken: event.replyToken,
+                  text: createReportString(openAIResult.report),
+                  threadId,
+                });
+              } catch (error) {
+                console.error(error);
+                return handleTextMessage({
+                  replyToken: event.replyToken,
+                  text: `很抱歉，由於系統發生錯誤，課程結束 - ${error}`,
+                });
+              }
             }
             return handleTextMessage({
               replyToken: event.replyToken,
@@ -412,24 +457,26 @@ function handleEvent(event: webhook.Event) {
       });
     }
     if (event.postback.data === "user_initiate_task") {
-      return getUserDocumentById(event.source?.userId ?? "").then((user) => {
-        if (!user || !user.isLoggedIn) return Promise.resolve(null);
-        if (user.threadId)
-          return handleTextMessage({
+      return getUserDocumentById(event.source?.userId ?? "").then(
+        async (user) => {
+          if (!user || !user.isLoggedIn) return Promise.resolve(null);
+          if (await OpenAILib.getCurrentCourse(user))
+            return handleTextMessage({
+              replyToken: event.replyToken,
+              text: "課程已開始",
+            });
+          return handleLearningQuickReply({
             replyToken: event.replyToken,
-            text: "課程已開始",
+            user,
           });
-        return handleLearningQuickReply({
-          replyToken: event.replyToken,
-          user,
-        });
-      });
+        }
+      );
     }
     if (event.postback.data === "user_cancel_task") {
       return getUserDocumentById(event.source?.userId ?? "").then(
         async (user) => {
           if (!user || !user.isLoggedIn) return Promise.resolve(null);
-          if (!user.threadId)
+          if (!OpenAILib.getCurrentCourse(user))
             return handleTextMessage({
               replyToken: event.replyToken,
               text: "課程已結束",
@@ -446,7 +493,12 @@ function handleEvent(event: webhook.Event) {
       return getUserDocumentById(event.source?.userId ?? "").then(
         async (user) => {
           if (!user || !user.isLoggedIn) return Promise.resolve(null);
-          if (user.threadId)
+          if (!limiter.canExecute(user))
+            return handleTextMessage({
+              replyToken: event.replyToken,
+              text: "系統正在回覆您的訊息，請稍後......",
+            });
+          if (await OpenAILib.getCurrentCourse(user))
             return handleTextMessage({
               replyToken: event.replyToken,
               text: "課程已開始",
@@ -476,19 +528,19 @@ function handleEvent(event: webhook.Event) {
 
           const openAIResult = await OpenAILib.chat({
             user,
-            message: `我想學${formatCourseKey(chapterKey)} ${
+            message: `我想學 ${formatCourseKey(chapterKey)} ${
               VIDEO_PATHS[chapterKey].title
             }`,
-            shouldCreateChat: true,
-            shouldSaveConversation: true,
             courseKey: chapterKey,
           });
 
           return handleTextMessage({
             replyToken: event.replyToken,
-            text: openAIResult.success
-              ? openAIResult.reply
-              : `很抱歉，系統目前無法回覆你的訊息 - ${openAIResult.error}`,
+            text: !openAIResult.success
+              ? `很抱歉，系統目前無法回覆你的訊息 - ${openAIResult.error}`
+              : openAIResult.completed
+              ? "課程結束"
+              : openAIResult.reply,
           });
         }
       );
@@ -536,8 +588,9 @@ function handleEvent(event: webhook.Event) {
     if (event.postback.data.startsWith("user_request_Q&A_practice:"))
       return getUserDocumentById(event.source?.userId ?? "").then(
         async (user) => {
+          console.log("user_request_Q&A_practice:");
           if (!user || !user.isLoggedIn) return Promise.resolve(null);
-          if (user.runId || !limiter.canExecute(user))
+          if (!limiter.canExecute(user))
             return handleTextMessage({
               replyToken: event.replyToken,
               text: "系統正在回覆您的訊息，請稍後......",
@@ -549,6 +602,7 @@ function handleEvent(event: webhook.Event) {
           const { key, title } = JSON.parse(payloadString || "{}");
           if (!key || !title || !VIDEO_PATHS[key]) return Promise.resolve(null);
           if (
+            user.trialed &&
             Array.isArray(user.completedVideos) &&
             user.completedVideos.find(
               (v) =>
@@ -566,17 +620,17 @@ function handleEvent(event: webhook.Event) {
 
           const openAIResult = await OpenAILib.chat({
             user,
-            message: `我想學${formatCourseKey(key)} ${VIDEO_PATHS[key].title}`,
-            shouldCreateChat: true,
-            shouldSaveConversation: true,
+            message: `我想學 ${formatCourseKey(key)} ${VIDEO_PATHS[key].title}`,
             courseKey: key,
           });
 
           return handleTextMessage({
             replyToken: event.replyToken,
-            text: openAIResult.success
-              ? openAIResult.reply
-              : `很抱歉，系統目前無法回覆你的訊息 - ${openAIResult.error}`,
+            text: !openAIResult.success
+              ? `很抱歉，系統目前無法回覆你的訊息 - ${openAIResult.error}`
+              : openAIResult.completed
+              ? "課程結束"
+              : openAIResult.reply,
           });
         }
       );

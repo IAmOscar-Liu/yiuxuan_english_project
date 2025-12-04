@@ -1,0 +1,57 @@
+{
+  "name": "CH01-A",
+  "title": "文法類助動詞",
+  "description": "Description of 文法類助動詞",
+  "questions": [
+    {
+      "question": " ____ Judy buy a watch yesterday?",
+      "options": {
+        "A": "Does",
+        "B": "Is",
+        "C": "Has",
+        "D": "Did"
+      },
+      "answer": "D"
+    },
+    {
+      "question": "Hank ____ pay a visit to us anymore. He died two days ago.",
+      "options": {
+        "A": "won't",
+        "B": "isn't",
+        "C": "doesn't",
+        "D": "hasn't"
+      },
+      "answer": "A"
+    },
+    {
+      "question": "Albert ____ me English for five years, and I’m learning happily.",
+      "options": {
+        "A": "has to teach",
+        "B": "has taught",
+        "C": "did teach.",
+        "D": "will teach"
+      },
+      "answer": "B"
+    },
+    {
+      "question": "A: Were you in the room yesterday?   B: No, I ___.",
+      "options": {
+        "A": "weren't",
+        "B": "wasn't",
+        "C": "didn't",
+        "D": "don't"
+      },
+      "answer": "B"
+    },
+    {
+      "question": "Lucia had to pay for the damages, and so ____ her boyfriend.",
+      "options": {
+        "A": "was",
+        "B": "had",
+        "C": "did",
+        "D": "does"
+      },
+      "answer": "C"
+    }
+  ]
+}

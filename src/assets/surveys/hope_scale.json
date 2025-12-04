@@ -1,0 +1,97 @@
+{
+  "title": "希望量表",
+  "description": "請以你目前在英文文法任務中的經驗感受為基準，回答下列題目。",
+  "scale": "likert-7",
+  "rating_options": [
+    {
+      "value": 7,
+      "label": "非常同意"
+    },
+    {
+      "value": 6,
+      "label": "同意"
+    },
+    {
+      "value": 5,
+      "label": "略同意"
+    },
+    {
+      "value": 4,
+      "label": "普通"
+    },
+    {
+      "value": 3,
+      "label": "略不同意"
+    },
+    {
+      "value": 2,
+      "label": "不同意"
+    },
+    {
+      "value": 1,
+      "label": "非常不同意"
+    }
+  ],
+  "questions": [
+    {
+      "code": "1",
+      "text": "在文法任務卡關時，我通常能想出其他方法突破。",
+      "answer": null
+    },
+    {
+      "code": "2",
+      "text": "我會積極追求自己設定的文法學習目標。",
+      "answer": null
+    },
+    {
+      "code": "3",
+      "text": "有時候，我會覺得自己比較疲倦。",
+      "answer": null
+    },
+    {
+      "code": "4",
+      "text": "面對文法任務中的任何問題，我通常能想到繞道而行的方式。",
+      "answer": null
+    },
+    {
+      "code": "5",
+      "text": "有時候，我會覺得自己會擔心一些事。",
+      "answer": null
+    },
+    {
+      "code": "6",
+      "text": "對我重要的文法成果，我能想到許多達成的方法。",
+      "answer": null
+    },
+    {
+      "code": "7",
+      "text": "有時候，我會覺得自己對一些事情感到不安。",
+      "answer": null
+    },
+    {
+      "code": "8",
+      "text": "如果文法題很難，我仍能提出替代策略並再試一次。",
+      "answer": null
+    },
+    {
+      "code": "9",
+      "text": "我過去的文法學習經驗，讓我更有準備面對未來的文法任務。",
+      "answer": null
+    },
+    {
+      "code": "10",
+      "text": "回顧到現在，我在文法相關學習上算是相當成功。",
+      "answer": null
+    },
+    {
+      "code": "11",
+      "text": "有時候，我會對自己感到擔心。",
+      "answer": null
+    },
+    {
+      "code": "12",
+      "text": "我通常能達成自己設定的文法學習目標。",
+      "answer": null
+    }
+  ]
+}

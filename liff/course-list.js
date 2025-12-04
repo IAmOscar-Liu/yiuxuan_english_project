@@ -7,27 +7,7 @@ const courseList = document.getElementById("course-list");
 
 let lineIdToken = null;
 
-async function renderCourses(userId) {
-  const currentUser = (
-    await fetch(`/api/user/${userId}`).then((res) => res.json())
-  ).data;
-
-  if (!currentUser) {
-    courseContainer.innerHTML = `<div class="card-body"><div class="alert alert-warning mb-0" role="alert">找不到使用者 ${userId} 的帳號資訊。</div></div>`;
-    return;
-  }
-
-  const courseByGroup = await fetch("/api/video/list-available", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      authorization: `Bearer ${currentUser.token}`,
-    },
-    body: JSON.stringify({
-      all: true,
-    }),
-  }).then((res) => res.json());
-
+async function renderCourses(currentUser, courseByGroup) {
   // Names of completed courses (those with completedRecords)
   const completedCourseKeys = new Set(
     (currentUser.completedVideos ?? [])
@@ -100,7 +80,7 @@ async function renderCourses(userId) {
 
       const content = isCompleted
         ? `<a href="/course-details.html?userId=${encodeURIComponent(
-            userId
+            currentUser.id
           )}&key=${encodeURIComponent(
             courseKey
           )}" class="text-decoration-none text-dark">${courseTitle}</a>`
@@ -143,5 +123,82 @@ async function renderCourses(userId) {
   // Hide loading spinner and show the main video container
   loadingDiv.classList.add("d-none");
   courseContainer.classList.remove("d-none");
-  renderCourses(userId);
+
+  const currentUser = (
+    await fetch(`/api/user/${userId}`).then((res) => res.json())
+  ).data;
+
+  if (!currentUser) {
+    courseContainer.innerHTML = `<div class="card-body"><div class="alert alert-warning mb-0" role="alert">找不到使用者 ${userId} 的帳號資訊。</div></div>`;
+    return;
+  }
+
+  const courseByGroup = await fetch("/api/video/list-available", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: `Bearer ${currentUser.token}`,
+    },
+    body: JSON.stringify({
+      all: true,
+    }),
+  }).then((res) => res.json());
+
+  // If the user is a parent, show a student selector
+  if (currentUser.role === "parent" && currentUser.associated_students) {
+    const selectorContainer = document.createElement("div");
+    selectorContainer.className = "mb-3";
+
+    const label = document.createElement("label");
+    label.htmlFor = "student-selector";
+    label.className = "form-label";
+    label.textContent = "選擇對象：";
+    selectorContainer.appendChild(label);
+
+    const select = document.createElement("select");
+    select.id = "student-selector";
+    select.className = "form-select";
+
+    // Add parent as the first option
+    const parentOption = document.createElement("option");
+    parentOption.value = currentUser.id;
+    parentOption.textContent = "自己";
+    select.appendChild(parentOption);
+
+    // Add associated students
+    currentUser.associated_students.forEach((student) => {
+      const studentOption = document.createElement("option");
+      studentOption.value = student.id;
+      studentOption.textContent = student.name;
+      select.appendChild(studentOption);
+    });
+
+    select.addEventListener("change", async (event) => {
+      const selectedUserId = event.target.value;
+      let userToRender = currentUser;
+
+      if (selectedUserId !== currentUser.id) {
+        // Fetch student data
+        const studentResponse = await fetch(
+          `/api/user/student/${selectedUserId}`,
+          {
+            headers: {
+              authorization: `Bearer ${currentUser.token}`,
+            },
+          }
+        );
+        const studentData = await studentResponse.json();
+        userToRender = studentData.data;
+      }
+
+      renderCourses(userToRender, courseByGroup);
+    });
+
+    selectorContainer.appendChild(select);
+    const formTitle = document.getElementById("form-title");
+    formTitle.after(selectorContainer);
+  }
+
+  // Initial render for the current user (parent or student)
+  renderCourses(currentUser, courseByGroup);
 })();

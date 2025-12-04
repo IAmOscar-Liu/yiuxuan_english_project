@@ -6,6 +6,7 @@ import {
 import { handleAlertMessage } from "./alertMessage";
 import { handleConfirmMessage } from "./confirmMessage";
 import { handleLiffButtonMessage } from "./LiffButtonMessage";
+import { handleTextMessage } from "./textMessage";
 
 export async function taskHandler({
   replyToken,
@@ -20,21 +21,44 @@ export async function taskHandler({
   if (!replyToken) return Promise.resolve(null);
   //   if (user.role != "student")
   //     return handleTextMessage({ text: noTaskMessage, replyToken });
-  if (!isSurveyCompleted(user))
+  if (user.plan === "premium" && !isSurveyCompleted(user, "1"))
     return handleLiffButtonMessage({
       replyToken,
       liffUrl: process.env.LINE_LIFF_URL! + "/survey-list.html",
       title: "您有尚未完成的問卷",
       label: "填寫問卷",
     });
-  // if (!isVideoCourseCompleted(user))
-  //   return handleLiffButtonMessage({
-  //     replyToken,
-  //     liffUrl: process.env.LINE_LIFF_URL! + "/video-list.html",
-  //     title: "您有尚未完成的影片課程",
-  //     label: "前往課程",
-  //   });
-  const nextAICourse = getNextAICourse(user);
+  if (user.plan === "premium" && !user.trialed)
+    return handleAlertMessage({
+      replyToken,
+      text: "您已完成問卷，請點此體驗問答練習",
+      action: {
+        type: "postback",
+        label: "開始問答練習",
+        data: `user_request_Q&A_practice:${JSON.stringify({
+          key: "chapter_1_0",
+          title: VIDEO_PATHS["chapter_1_0"].title,
+        })}`,
+      },
+    });
+  if (!isSurveyCompleted(user)) {
+    return handleLiffButtonMessage({
+      replyToken,
+      liffUrl: process.env.LINE_LIFF_URL! + "/survey-list.html",
+      title:
+        user.plan === "premium"
+          ? "請繼續填寫未完成的問卷"
+          : "您有尚未完成的問卷",
+      label: "填寫問卷",
+    });
+  }
+  if (user.approved !== true) {
+    return handleTextMessage({
+      replyToken,
+      text: "您的問卷已填寫完畢，系統管理員將為您開通課程，如有疑問，請聯絡系統管理員",
+    });
+  }
+  const nextAICourse = user.plan === "premium" ? getNextAICourse(user) : null;
   if (nextAICourse) {
     const formattedKey = formatCourseKey(nextAICourse.key);
     return handleConfirmMessage({
@@ -103,7 +127,10 @@ export async function taskHandler({
   });
 }
 
-export function isSurveyCompleted(user: { [key: string]: any }) {
+export function isSurveyCompleted(
+  user: { [key: string]: any },
+  phase?: string
+) {
   const completedSurveys = user.completedSurveys;
   if (!Array.isArray(completedSurveys) || completedSurveys.length === 0)
     return false;
@@ -112,7 +139,14 @@ export function isSurveyCompleted(user: { [key: string]: any }) {
       .map((survey) => survey.name)
       .filter((v) => typeof v === "string" && v.length > 0)
   );
-  return Object.keys(SURVEY_PATHS).every((name) => nameSet.has(name));
+  let surveyNames = Object.keys(SURVEY_PATHS);
+  if (phase) {
+    surveyNames = surveyNames.filter(
+      (name) => SURVEY_PATHS[name].phase === phase
+    );
+  }
+
+  return surveyNames.every((name) => nameSet.has(name));
 }
 
 export function isVideoCourseCompleted(user: { [key: string]: any }) {

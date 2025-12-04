@@ -1,0 +1,77 @@
+{
+  "title": "習得性無助量表",
+  "description": "請根據您在日常學習與生活中的一般經驗，選擇最符合您感受的同意程度。",
+  "scale": "likert-7",
+  "rating_options": [
+    {
+      "value": 7,
+      "label": "非常同意"
+    },
+    {
+      "value": 6,
+      "label": "同意"
+    },
+    {
+      "value": 5,
+      "label": "略同意"
+    },
+    {
+      "value": 4,
+      "label": "普通"
+    },
+    {
+      "value": 3,
+      "label": "略不同意"
+    },
+    {
+      "value": 2,
+      "label": "不同意"
+    },
+    {
+      "value": 1,
+      "label": "非常不同意"
+    }
+  ],
+  "questions": [
+    {
+      "code": "1",
+      "text": "我常覺得，無論我怎麼努力，事情仍不會照我期望的方式發展。",
+      "answer": null
+    },
+    {
+      "code": "2",
+      "text": "當我面臨困難的情況時，通常不知道該怎麼辦。",
+      "answer": null
+    },
+    {
+      "code": "3",
+      "text": "我覺得自己的努力常常是沒用的。",
+      "answer": null
+    },
+    {
+      "code": "4",
+      "text": "有時我認為自己無法改變不理想的結果。",
+      "answer": null
+    },
+    {
+      "code": "5",
+      "text": "即使我再努力，仍舊無法控制發生的事。",
+      "answer": null
+    },
+    {
+      "code": "6",
+      "text": "面對問題時，我覺得自己的行動很少能帶來改變。",
+      "answer": null
+    },
+    {
+      "code": "7",
+      "text": "我覺得自己在達成想要的事情上相當無力。",
+      "answer": null
+    },
+    {
+      "code": "8",
+      "text": "有時候我乾脆放棄，因為努力也沒有什麼用。",
+      "answer": null
+    }
+  ]
+}

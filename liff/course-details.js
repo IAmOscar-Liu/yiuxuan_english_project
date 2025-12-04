@@ -49,8 +49,8 @@ function renderCourseDetails(courseList, userDetail) {
           .map((course, index) => {
             const attemptText =
               index === 0
-                ? `最近一次 (${formatFirebaseTime(course.updatedAt)})`
-                : formatFirebaseTime(course.updatedAt);
+                ? `最近一次 (${formatFirebaseTime(course.createdAt)})`
+                : formatFirebaseTime(course.createdAt);
             return `<option value="${index}">${attemptText}</option>`;
           })
           .join("")}
@@ -87,7 +87,7 @@ function renderCourseDetails(courseList, userDetail) {
 
     let reportHtml = "";
     if (report) {
-      const formattedUpdatedAt = formatFirebaseTime(chatDetail.updatedAt);
+      const formattedCreatedAt = formatFirebaseTime(chatDetail.createdAt);
       const starRatingHtml =
         report.score !== undefined && report.score !== null
           ? getStarRating(report.score)
@@ -102,14 +102,16 @@ function renderCourseDetails(courseList, userDetail) {
                 <strong>用戶名:</strong> <span>${userName}</span>
               </li>
               <li class="list-group-item d-flex justify-content-between align-items-center">
-                <strong>完成時間:</strong> <span>${formattedUpdatedAt}</span>
+                <strong>完成時間:</strong> <span>${formattedCreatedAt}</span>
               </li>
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 <strong>學習主題:</strong> <span>${report.topic || "無"}</span>
               </li>
               <li class="list-group-item">
                 <strong>涉及知識點:</strong> <div>${
-                  report.topics?.join("、") || "無"
+                  Array.isArray(report.involvedKnowledge)
+                    ? report.involvedKnowledge.join("、")
+                    : report.involvedKnowledge ?? "無"
                 }</div>
               </li>
               <li class="list-group-item d-flex justify-content-between align-items-center">

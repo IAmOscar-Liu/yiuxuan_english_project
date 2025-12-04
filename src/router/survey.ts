@@ -11,6 +11,7 @@ const router = Router();
 
 router.get("/list", authenticateToken, (req, res) => {
   const data = Object.keys(SURVEY_PATHS).map((key) => ({
+    phase: SURVEY_PATHS[key].phase,
     title: SURVEY_PATHS[key].title,
     surveyName: key,
   }));

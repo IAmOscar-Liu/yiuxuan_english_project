@@ -5,7 +5,7 @@ function createRateLimiter(limitMs?: number) {
     return !rateLimitSet.has(user.id);
   }
 
-  function execute(user: { [key: string]: any }) {
+  function execute(user: { [key: string]: any }, limitMs?: number) {
     rateLimitSet.add(user.id);
     if (typeof limitMs === "number")
       setTimeout(() => {
