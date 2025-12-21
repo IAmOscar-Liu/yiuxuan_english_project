@@ -28,19 +28,34 @@ export async function taskHandler({
       title: "您有尚未完成的問卷",
       label: "填寫問卷",
     });
-  if (user.plan === "premium" && !user.trialed)
+  if (user.plan === "premium" && user.trialed !== "completed") {
+    if (user.trialed === "submitted")
+      return handleAlertMessage({
+        replyToken,
+        text: "您已完成體驗課程，請點選下方『問答練習』來進一步提升學習成效吧！",
+        action: {
+          type: "postback",
+          label: "問答練習",
+          data: `user_request_Q&A_practice:${JSON.stringify({
+            key: "chapter_1_0",
+            title: VIDEO_PATHS["chapter_1_0"].title,
+          })}`,
+        },
+      });
     return handleAlertMessage({
       replyToken,
-      text: "您已完成問卷，請點此體驗問答練習",
+      text: "您已完成問卷，請點此體驗教學課程",
       action: {
-        type: "postback",
-        label: "開始問答練習",
-        data: `user_request_Q&A_practice:${JSON.stringify({
-          key: "chapter_1_0",
-          title: VIDEO_PATHS["chapter_1_0"].title,
-        })}`,
+        type: "uri",
+        label: "前往課程",
+        uri:
+          process.env.LINE_LIFF_URL! +
+          `/video.html?userId=${user.id}&name=${encodeURIComponent(
+            "chapter_1_0"
+          )}&closeWindowOnSuccess=true`,
       },
     });
+  }
   if (!isSurveyCompleted(user)) {
     return handleLiffButtonMessage({
       replyToken,

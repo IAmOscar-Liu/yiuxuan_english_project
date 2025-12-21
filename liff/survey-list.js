@@ -37,7 +37,8 @@ async function renderSurveys(userId) {
     // Generate and append task items to the list
     surveys.forEach((task) => {
       const isCompleted = completedSurveys.includes(task.surveyName);
-      const isLocked = !currentUser.trialed && task.phase === "2";
+      const isLocked =
+        currentUser.trialed !== "completed" && task.phase === "2";
       const listItem = document.createElement("li");
 
       // Style the list item based on completion status

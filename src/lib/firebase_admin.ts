@@ -467,11 +467,16 @@ export async function completeVideoCourse({
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(userRef);
 
-    // If user has not trialed, set trialed to true and do not proceed.
+    // If user's trial has not been completed, set trialed and do not proceed.
     const userData = snap.data();
-    if (completeQA && !userData?.trialed) {
-      tx.set(userRef, { trialed: true }, { merge: true });
-      console.log(`User ${userId} has started their trial.`);
+    if (userData?.trialed !== "completed") {
+      const trialed = completeQA
+        ? "completed"
+        : submitted
+        ? "submitted"
+        : "watched";
+      tx.set(userRef, { trialed }, { merge: true });
+      console.log(`User ${userId} has set their trial to ${trialed}.`);
       return;
     }
 

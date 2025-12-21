@@ -602,7 +602,7 @@ function handleEvent(event: webhook.Event) {
           const { key, title } = JSON.parse(payloadString || "{}");
           if (!key || !title || !VIDEO_PATHS[key]) return Promise.resolve(null);
           if (
-            user.trialed &&
+            user.trialed === "completed" &&
             Array.isArray(user.completedVideos) &&
             user.completedVideos.find(
               (v) =>

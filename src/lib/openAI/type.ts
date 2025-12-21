@@ -5,6 +5,11 @@ export type ChatMessage = {
   content: string;
 };
 
+export type ReflectionItem = {
+  question: string;
+  answer: string;
+};
+
 export type Report = {
   complete: boolean;
   topic: string;
@@ -12,6 +17,7 @@ export type Report = {
   comment: string;
   involvedKnowledge: string;
   score: number;
+  reflection?: ReflectionItem[];
 };
 
 export type OpenAIResult =

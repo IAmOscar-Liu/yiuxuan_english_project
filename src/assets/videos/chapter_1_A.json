@@ -28,7 +28,7 @@
       "options": {
         "A": "has to teach",
         "B": "has taught",
-        "C": "did teach.",
+        "C": "did teach",
         "D": "will teach"
       },
       "answer": "B"

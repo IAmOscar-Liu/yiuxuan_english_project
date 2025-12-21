@@ -193,6 +193,15 @@ function collectProfileAnswers(json) {
 // This function is now corrected to handle surveys without a 'sections' array.
 function renderScale(surveyName, json, userId, token) {
   formTitle.innerText = json.title || "生活滿意度量表";
+
+  if (json.description) {
+    const descriptionEl = el(
+      "div",
+      "alert alert-info",
+      `<strong>作答說明：</strong> ${json.description}`
+    );
+    detailsDiv.appendChild(descriptionEl);
+  }
   const hint = el(
     "div",
     "mb-3 small text-secondary",

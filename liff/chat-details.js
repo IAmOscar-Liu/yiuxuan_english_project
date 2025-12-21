@@ -142,11 +142,49 @@ async function renderChatDetail(threadId, chatDetail, userDetail) {
       `;
   }
 
+  // Build the HTML for the collapsible reflections
+  let reflectionsHtml = "";
+  if (
+    report &&
+    report.reflection &&
+    Array.isArray(report.reflection) &&
+    report.reflection.length > 0
+  ) {
+    let reflectionsContent = "";
+    report.reflection.forEach((item, idx) => {
+      const answerText = item.answer ? item.answer.replace(/\n/g, "<br>") : "";
+      reflectionsContent += `
+            <div class="mb-3">
+              <div class="fw-bold mb-1">${idx + 1}. ${item.question}</div>
+              <div class="p-2 bg-light rounded">${answerText}</div>
+            </div>
+          `;
+    });
+    reflectionsHtml = `
+        <div class="card shadow-sm mb-4">
+          <div class="card-header" id="headingReflections">
+            <h5 class="mb-0">
+              <button class="btn btn-link w-100 text-start text-decoration-none d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#collapseReflections" aria-expanded="false" aria-controls="collapseReflections">
+                反思問答
+                <span class="ms-auto" id="reflections-arrow">&#9660;</span>
+              </button>
+            </h5>
+          </div>
+          <div id="collapseReflections" class="collapse" aria-labelledby="headingReflections">
+            <div class="card-body">
+              ${reflectionsContent}
+            </div>
+          </div>
+        </div>
+      `;
+  }
+
   // Combine all the HTML and add event listeners for the arrows
   detailsDiv.innerHTML = `
         ${reportHtml}
         ${summaryTextHtml}
         ${chatMessagesHtml}
+        ${reflectionsHtml}
       `;
 
   formTitle.innerText = `${userName} 的任務詳細`;
@@ -171,6 +209,17 @@ async function renderChatDetail(threadId, chatDetail, userDetail) {
     });
     collapseChat.addEventListener("hide.bs.collapse", () => {
       chatArrow.innerHTML = "&#9660;"; // Down arrow
+    });
+  }
+
+  const collapseReflections = document.getElementById("collapseReflections");
+  const reflectionsArrow = document.getElementById("reflections-arrow");
+  if (collapseReflections && reflectionsArrow) {
+    collapseReflections.addEventListener("show.bs.collapse", () => {
+      reflectionsArrow.innerHTML = "&#9650;"; // Up arrow
+    });
+    collapseReflections.addEventListener("hide.bs.collapse", () => {
+      reflectionsArrow.innerHTML = "&#9660;"; // Down arrow
     });
   }
 }

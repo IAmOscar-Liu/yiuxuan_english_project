@@ -184,11 +184,51 @@ function renderCourseDetails(courseList, userDetail) {
       `;
     }
 
+    // Build the HTML for the collapsible reflections
+    let reflectionsHtml = "";
+    if (
+      report &&
+      report.reflection &&
+      Array.isArray(report.reflection) &&
+      report.reflection.length > 0
+    ) {
+      let reflectionsContent = "";
+      report.reflection.forEach((item, idx) => {
+        const answerText = item.answer
+          ? item.answer.replace(/\n/g, "<br>")
+          : "";
+        reflectionsContent += `
+            <div class="mb-3">
+              <div class="fw-bold mb-1">${idx + 1}. ${item.question}</div>
+              <div class="p-2 bg-light rounded">${answerText}</div>
+            </div>
+          `;
+      });
+      reflectionsHtml = `
+        <div class="card shadow-sm mb-4">
+          <div class="card-header" id="headingReflections">
+            <h5 class="mb-0">
+              <button class="btn btn-link w-100 text-start text-decoration-none d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#collapseReflections" aria-expanded="false" aria-controls="collapseReflections">
+                反思問答
+                <span class="ms-auto" id="reflections-arrow">&#9660;</span>
+              </button>
+            </h5>
+          </div>
+          <div id="collapseReflections" class="collapse" aria-labelledby="headingReflections">
+            <div class="card-body">
+              ${reflectionsContent}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     // Combine all HTML and set it
     contentContainer.innerHTML = `
       ${reportHtml}
       ${summaryTextHtml}
       ${chatMessagesHtml}
+      ${reflectionsHtml}
     `;
     formTitle.innerText = `${userName} 的課程詳細`;
 

@@ -96,7 +96,8 @@ export class OpenAILib {
       ];
 
       const response = await openai.responses.create({
-        model: "gpt-4.1", // or "gpt-4.1" if you prefer
+        // model: "gpt-4.1", // or "gpt-4.1" if you prefer
+        model: "gpt-5.1", // or "gpt-4.1" if you prefer
         input,
       });
 
